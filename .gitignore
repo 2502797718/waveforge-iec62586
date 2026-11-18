@@ -1,0 +1,10 @@
+_private/
+build/
+*.o
+*.a
+*.exe
+*.bin
+runs/
+standard-scan/
+.DS_Store
+compile_commands.json

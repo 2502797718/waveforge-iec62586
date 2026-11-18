@@ -1,0 +1,73 @@
+name: Feature request
+description: Propose a capability, preset, format or API extension
+title: "[feature] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please describe the problem first, then the proposed solution. WaveForge stays dependency-free
+        (C99 + `libm`) and keeps the Signal Core / Preset Layer split, so proposals should respect both.
+
+        Do not request reproduced standard text or tables.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or gap
+      description: What are you trying to generate or verify that is currently awkward or impossible?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: CLI flag, JSON field, C API function, preset, format change — be as concrete as you can.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Signal core / sampler
+        - Preset layer / scenarios
+        - CLI
+        - JSON input
+        - C API
+        - Output format
+        - Streaming
+        - Verification tools
+        - Build system / CI
+        - Documentation / examples
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Existing flags, JSON constructs, or external tools you tried.
+    validations:
+      required: false
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: Compatibility impact
+      description: Would this change existing CLI, JSON or file-format behavior? If so, how should it be versioned?
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: This request does not require copying standard text, tables or scans.
+          required: true
+        - label: I understand WaveForge does not issue IEC conformity verdicts or hardware accuracy claims.
+          required: true

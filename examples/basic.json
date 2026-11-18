@@ -1,0 +1,18 @@
+{
+  "test": "A1.2.2",
+  "time": {
+    "duration_s": 1,
+    "sample_rate_hz": 51200,
+    "start_utc_ns": 0
+  },
+  "channels": ["Ua", "Ub", "Uc"],
+  "signal": {
+    "freq_hz": 50.05,
+    "amp_pct": { "Ua": 100, "Ub": 100, "Uc": 100 },
+    "phase_deg": { "Ua": 0, "Ub": -120, "Uc": 120 }
+  },
+  "output": {
+    "format": "f64",
+    "frame_samples": 256
+  }
+}

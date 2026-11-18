@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure (CMake)
+        run: cmake -S . -B build-cmake -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build (CMake)
+        run: cmake --build build-cmake -j
+
+      - name: Test (CTest)
+        run: ctest --test-dir build-cmake --output-on-failure
+
+      - name: Build (Make)
+        run: make clean && make all selftest
+
+      - name: Self-test (Make)
+        run: ./build/selftest

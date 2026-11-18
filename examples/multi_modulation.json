@@ -1,0 +1,38 @@
+{
+  "time": {
+    "duration_s": 2,
+    "sample_rate_hz": 51200,
+    "start_utc_ns": 0
+  },
+  "channels": ["Ua", "Ub", "Uc"],
+  "program": {
+    "components": [
+      {
+        "kind": "fundamental",
+        "order": 1,
+        "amp_pct": { "Ua": 100, "Ub": 100, "Uc": 100 },
+        "phase_deg": { "Ua": 0, "Ub": -120, "Uc": 120 },
+        "channels": ["Ua", "Ub", "Uc"],
+        "amplitude_ref": "nominal",
+        "modulators": [
+          { "kind": "freq_triangle", "from": 40, "to": 60, "period_s": 10 },
+          { "kind": "amp_sine", "frequency_hz": 2.3, "depth_pct": 10, "phase_deg": 0 }
+        ]
+      },
+      {
+        "kind": "tone",
+        "frequency_hz": 1060,
+        "amp_pct": 3,
+        "phase_deg": 0,
+        "channels": ["Ua", "Ub", "Uc"]
+      }
+    ],
+    "events": [
+      { "kind": "phase_step", "time_s": 1, "channel_mask": "Ua,Ub,Uc", "value": 30, "duration_s": 0 }
+    ]
+  },
+  "output": {
+    "format": "f64",
+    "frame_samples": 256
+  }
+}
