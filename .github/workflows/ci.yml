@@ -5,9 +5,15 @@ on:
   pull_request:
 
 jobs:
-  build:
+  cmake:
+    name: CMake / ${{ matrix.compiler }}
     runs-on: ubuntu-latest
-
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [gcc, clang]
+    env:
+      CC: ${{ matrix.compiler }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -20,6 +26,19 @@ jobs:
 
       - name: Test (CTest)
         run: ctest --test-dir build-cmake --output-on-failure
+
+  make:
+    name: Make / ${{ matrix.compiler }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [gcc, clang]
+    env:
+      CC: ${{ matrix.compiler }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Build (Make)
         run: make clean && make all selftest
