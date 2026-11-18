@@ -11,6 +11,7 @@
 <img alt="MIT" src="https://img.shields.io/badge/license-MIT-green?style=flat-square">
 <img alt="Linux / macOS" src="https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20WSL-lightgrey?style=flat-square">
 <img alt="CMake + Make" src="https://img.shields.io/badge/build-CMake%20%2B%20Make-informational?style=flat-square">
+<a href="https://github.com/2502797718/waveforge-iec62586/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/2502797718/waveforge-iec62586/actions/workflows/ci.yml/badge.svg"></a>
 <img alt="PRs welcome" src="https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square">
 
 </div>
@@ -84,6 +85,8 @@ flowchart LR
 ## 快速开始
 
 ```sh
+git clone https://github.com/2502797718/waveforge-iec62586.git
+cd waveforge-iec62586
 make                                                    # 生成 build/libwaveforge.a、build/wg、build/selftest
 ./build/wg list                                         # 104 行：101 个场景 + 3 个别名
 ./build/wg gen --test A1.2.2 --system 50 --duration 60 --out a122.bin
