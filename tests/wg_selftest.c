@@ -1164,14 +1164,14 @@ static void test_builder_arbitrary(void)
     cap_ctx_t st_ctx;
     char a_err[256];
     char a_detail[512];
-    double f64_rms_f;
-    double f64_ph_f;
-    double f64_rms_h3;
-    double f64_ph_h3;
-    double f64_rms_h25;
-    double f64_ph_h25;
-    double f64_rel3;
-    double f64_rel25;
+    double f64_rms_f = 0.0;
+    double f64_ph_f = 0.0;
+    double f64_rms_h3 = 0.0;
+    double f64_ph_h3 = 0.0;
+    double f64_rms_h25 = 0.0;
+    double f64_ph_h25 = 0.0;
+    double f64_rel3 = 0.0;
+    double f64_rel25 = 0.0;
     int s32_ok = 0;
 
     pst_b = builder_single(u32_fs, 1.0);
@@ -1244,12 +1244,12 @@ static void test_per_component_envelope(void)
     cap_ctx_t st_ctx;
     char a_err[256];
     char a_detail[512];
-    double f64_fund;
-    double f64_ph;
-    double f64_rms_early;
-    double f64_rms_late;
-    double f64_ratio;
-    int s32_ok;
+    double f64_fund = 0.0;
+    double f64_ph = 0.0;
+    double f64_rms_early = 0.0;
+    double f64_rms_late = 0.0;
+    double f64_ratio = 0.0;
+    int s32_ok = 0;
 
     pst_b = builder_single(u32_fs, 1.0);
     if (pst_b == NULL) {
