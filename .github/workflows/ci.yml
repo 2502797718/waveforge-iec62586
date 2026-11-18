@@ -41,7 +41,28 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build (Make)
-        run: make clean && make all selftest
+        shell: bash
+        run: |
+          set +e
+          make clean
+          make all selftest 2>&1 | tee make.log
+          rc=${PIPESTATUS[0]}
+          if [ "$rc" -ne 0 ]; then
+            grep -E "error:|warning:|Error|FAIL" make.log | head -30 | while IFS= read -r line; do
+              echo "::error::$line"
+            done
+            exit "$rc"
+          fi
 
       - name: Self-test (Make)
-        run: ./build/selftest
+        shell: bash
+        run: |
+          set +e
+          ./build/selftest 2>&1 | tee selftest.log
+          rc=${PIPESTATUS[0]}
+          if [ "$rc" -ne 0 ]; then
+            grep -E "FAIL|Error" selftest.log | head -30 | while IFS= read -r line; do
+              echo "::error::$line"
+            done
+            exit "$rc"
+          fi
