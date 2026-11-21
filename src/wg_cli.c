@@ -1165,10 +1165,11 @@ int32_t wg_cli_parse(int argc, char **argv, wg_config_t *pst_cfg,
         for (i = 0; i < (int)opt_n; ++i) {
             switch (a_opt[i].id) {
             case OPT_DURATION:
-                if (parse_duration(a_opt[i].val, &d) != 0 || d < 0.001 ||
-                    d > 7200.0) {
+                if (parse_duration(a_opt[i].val, &d) != 0 ||
+                    d < WG_MIN_DURATION_S || d > WG_MAX_DURATION_S) {
                     snprintf(pc_err, err_len,
-                             "duration_s: expected number in [0.001, 7200]");
+                             "duration_s: expected number in [0.001, %.0f]",
+                             WG_MAX_DURATION_S);
                     return -1;
                 }
                 pst_cfg->duration_s = d;

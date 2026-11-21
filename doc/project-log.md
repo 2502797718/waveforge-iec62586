@@ -18,6 +18,7 @@
 | P7 | 预设改造为 program；JSON `components/modulators/events`；旧输入兼容 | `NO_DEFAULT` 取代旧的“能力缺口”表述 |
 | P8 | 数学口径校验与回归 | selftest 13/13，6 场景 PASS，旧 JSON 与等价 program 逐字节一致 |
 | P9 | 开源化整理：目录迁移到 `include/src/apps/tests/examples`，补 CMake、CI、示例与公开文档 | `doc/` 重建；旧文档归档到 `_private/legacy-docs` |
+| P10 | CR-WAVEFORGE-001：时长上限 7200→7300 s，集中为 `WG_MAX_DURATION_S`；新增 `duration-limit` 自测；发布 1.0.1 | selftest 14/14；7210 s 流式生成 369 152 000 样本 |
 
 ## 2. 架构演进
 

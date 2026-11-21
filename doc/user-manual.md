@@ -1,6 +1,6 @@
 # WaveForge 使用手册
 
-> 版本：1.0.0（`WaveForge 1.0.0`）
+> 版本：1.0.1（`WaveForge 1.0.1`）
 > 适用平台：Linux / WSL / macOS（POSIX 工具链）；Windows 原生构建可用，但自测依赖 POSIX 接口。
 > 本文只讲**怎么用**；结构与契约见 [架构](architecture.md)、[输入格式](input-format.md)、[输出格式](output-format.md)。
 
@@ -39,7 +39,7 @@ make                 # 等价于 make all
 |---|---|
 | `build/libwaveforge.a` | 静态库（Signal Core + Preset Layer） |
 | `build/wg` | 命令行工具 |
-| `build/selftest` | 13 项自测 |
+| `build/selftest` | 14 项自测 |
 
 其它目标：
 
@@ -448,7 +448,7 @@ python3 tools/check_acceptance.py a8-1-3 a813.bin
 make test
 ```
 
-13 项覆盖：配置校验、流计数/时间戳、file-vs-stream、确定性、相位连续、i24、660 s 长跑、builder 任意分量、逐分量包络、叠加调制、自定义三角、`NO_DEFAULT`、旧字段兼容。详见 [校验](verification.md)。
+14 项覆盖：配置校验、时长上限、流计数/时间戳、file-vs-stream、确定性、相位连续、i24、660 s 长跑、builder 任意分量、逐分量包络、叠加调制、自定义三角、`NO_DEFAULT`、旧字段兼容。详见 [校验](verification.md)。
 
 ## 10. 常见场景做法
 
@@ -515,7 +515,7 @@ i24 的换算比例在文件头 `u_scale`/`i_scale` 中，不要写死 220 V。
 | `NO_DEFAULT: ...` | 预设缺标准默认值 | 用 `--freq/--amp/--harmonics` 或 JSON `program` 补字段 |
 | `CUSTOM: ...` | 该场景需要用户选择/给值 | 按提示补通道、参考通道或分量 |
 | `EXCLUDED: ...` | 不属发生器职责 | 不要用数字注入代替硬件试验 |
-| `duration_s: expected number in [0.001, 7200]` | 时长越界 | 改到 0.001–7200 s |
+| `duration_s: expected number in [0.001, 7300]` | 时长越界 | 改到 0.001–7300 s |
 | `sample_rate_hz: expected integer in [1000, 1000000]` | 采样率越界 | 改到 1 k–1 MHz |
 | `frame_samples: expected integer in [1, 65535]` | 帧长越界 | 改到 1–65535 |
 | `segments: expected total duration >= duration_s` | 段时长之和不足 | 让各段之和等于 `duration_s` |

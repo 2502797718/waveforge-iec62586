@@ -1,6 +1,6 @@
 # WaveForge User Manual
 
-> Version 1.0.0 (`WaveForge 1.0.0`)
+> Version 1.0.1 (`WaveForge 1.0.1`)
 > Platforms: Linux, WSL and macOS are the primary targets. Native Windows builds work for the CLI; the self-test assumes POSIX facilities.
 > This manual explains usage. For contracts and internals see [Architecture](architecture.md), [Input format](input-format.md) and [Output format](output-format.md).
 
@@ -38,7 +38,7 @@ make test
 |---|---|
 | `build/libwaveforge.a` | static library (Signal Core + Preset Layer) |
 | `build/wg` | command-line generator |
-| `build/selftest` | 13 self-tests |
+| `build/selftest` | 14 self-tests |
 
 `sh tools/build.sh` cleans, rebuilds and runs the self-test.
 
@@ -406,7 +406,7 @@ For i24, always read the header scales; never assume 220 V.
 | `NO_DEFAULT: ...` | preset lacks a standard default | supply the field via overrides or JSON `program` |
 | `CUSTOM: ...` | user must choose a channel/reference or value | follow the message |
 | `EXCLUDED: ...` | outside generator scope | do not substitute digital injection for hardware tests |
-| `duration_s: expected number in [0.001, 7200]` | duration out of range | use 0.001–7200 s |
+| `duration_s: expected number in [0.001, 7300]` | duration out of range | use 0.001–7300 s |
 | `sample_rate_hz: expected integer in [1000, 1000000]` | rate out of range | use 1 k–1 MHz |
 | `frame_samples: expected integer in [1, 65535]` | frame length out of range | use 1–65535 |
 | `segments: expected total duration >= duration_s` | segments too short | make the sum equal `duration_s` |

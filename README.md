@@ -56,7 +56,7 @@ hardware, or reproduce standard text.
 | **Preset layer** | IEC 62586-2 scenario names for clauses 6.1–6.13 plus 3 frequency aliases; clauses 6.14–6.17 are recipe-level mappings over explicit current channels. Each preset only supplies defaults. |
 | **Output** | `WGIEC625` file (64 B header, 56 B frame headers, 32 B trailer), f64 / f32 / i24 samples, planar channel layout, `<file>.manifest.json` with SHA-256. |
 | **Streaming** | `wg_run_stream()` frame callback with constant memory, suitable for multi-hour runs; `samples` is valid only inside the callback. |
-| **Verification** | 13 self-tests, 6 regression scenarios, independent `verify.py` / `check_acceptance.py` that rebuild the expected signal from the published format and manifest. |
+| **Verification** | 14 self-tests, 6 regression scenarios, independent `verify.py` / `check_acceptance.py` that rebuild the expected signal from the published format and manifest. |
 | **Dependencies** | C99 standard library and `libm` only. Python 3.8+ is needed only for the independent verifier and uses the standard library alone. |
 
 ## How it compares

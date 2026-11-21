@@ -2094,8 +2094,8 @@ static int load_time(cfg_ctx *pst_x, const jval *pst_v)
 
     jv = jo_get(pst_v, "duration_s");
     if (jv != NULL) {
-        if (want_range(pst_x, jv, "time.duration_s", 0.001, 7200.0,
-                       &d) != 0) {
+        if (want_range(pst_x, jv, "time.duration_s", WG_MIN_DURATION_S,
+                       WG_MAX_DURATION_S, &d) != 0) {
             return -1;
         }
         pst_x->cfg->duration_s = d;
@@ -2207,8 +2207,8 @@ static int load_segments(cfg_ctx *pst_x, const jval *pst_v)
         }
 
         snprintf(path, sizeof(path), "segments[%zu].duration_s", k);
-        if (want_range(pst_x, jo_get(e, "duration_s"), path, 0.001, 7200.0,
-                       &dur) != 0) {
+        if (want_range(pst_x, jo_get(e, "duration_s"), path, WG_MIN_DURATION_S,
+                       WG_MAX_DURATION_S, &dur) != 0) {
             return -1;
         }
 

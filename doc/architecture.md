@@ -35,7 +35,7 @@
 | [`src/wg_signal.c`](../src/wg_signal.c) | 旧 `wg_signal_t` 求值路径（program 为空时使用） |
 | [`src/wg_writer.c`](../src/wg_writer.c) | 文件头/帧头/结束记录、manifest、SHA-256 调用 |
 | [`apps/wg_main.c`](../apps/wg_main.c) | CLI 入口（仅 file 输出） |
-| [`tests/wg_selftest.c`](../tests/wg_selftest.c) | 13 项自测 |
+| [`tests/wg_selftest.c`](../tests/wg_selftest.c) | 14 项自测 |
 
 ## 3. 数据流
 
@@ -227,7 +227,7 @@ apm900-waveform-sim-20261118/
 ├─ apps/
 │  └─ wg_main.c             CLI 入口
 ├─ tests/
-│  └─ wg_selftest.c         13 项自测
+│  └─ wg_selftest.c         14 项自测
 ├─ examples/
 │  ├─ basic.json            基础 JSON 配置
 │  ├─ harmonics.json        谐波配置

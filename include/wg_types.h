@@ -14,6 +14,10 @@
 #define WG_MAX_TONES           8
 #define WG_MAX_SEGMENTS        16
 
+/* 单次生成的时长范围（秒）。7300 = 2 h 聚合块 + 100 s 收尾余量。 */
+#define WG_MIN_DURATION_S      0.001
+#define WG_MAX_DURATION_S      7300.0
+
 /* 通道编号，与输入契约中的 Ua/Ub/Uc/Ia/Ib/Ic/In 一一对应。 */
 typedef enum {
     WG_CH_UA = 0,

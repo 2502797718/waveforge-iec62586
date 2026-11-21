@@ -210,6 +210,62 @@ static void test_config(void)
 }
 
 /* ------------------------------------------------------------------ */
+/* 1b. duration limit (CR-WAVEFORGE-001)                              */
+/* ------------------------------------------------------------------ */
+
+static void test_duration_limit(void)
+{
+    char a_ok_path[64];
+    char a_bad_path[64];
+    char a_err[256];
+    char a_detail[512];
+    wg_config_t st_cfg;
+    FILE *p_file;
+    double f64_dur = 0.0;
+    int s32_ok_load = 0;
+    int s32_bad_reject = 0;
+
+    (void)snprintf(a_ok_path, sizeof(a_ok_path), "wf-duration-%ld-ok.json",
+                   (long)getpid());
+    (void)snprintf(a_bad_path, sizeof(a_bad_path), "wf-duration-%ld-bad.json",
+                   (long)getpid());
+
+    p_file = fopen(a_ok_path, "wb");
+    if (p_file == NULL) {
+        report(0, "duration-limit", "cannot create temporary config");
+        return;
+    }
+    (void)fputs("{\"time\":{\"duration_s\":7210}}", p_file);
+    (void)fclose(p_file);
+
+    wg_config_default(&st_cfg);
+    s32_ok_load =
+        (wg_config_load_json(a_ok_path, &st_cfg, a_err, sizeof(a_err)) == 0);
+    f64_dur = st_cfg.duration_s;
+    (void)remove(a_ok_path);
+
+    p_file = fopen(a_bad_path, "wb");
+    if (p_file == NULL) {
+        report(0, "duration-limit", "cannot create temporary config");
+        return;
+    }
+    (void)fputs("{\"time\":{\"duration_s\":7300.001}}", p_file);
+    (void)fclose(p_file);
+
+    wg_config_default(&st_cfg);
+    s32_bad_reject =
+        (wg_config_load_json(a_bad_path, &st_cfg, a_err, sizeof(a_err)) != 0);
+    (void)remove(a_bad_path);
+
+    (void)snprintf(a_detail, sizeof(a_detail),
+                   "7210=%s (%.3f s) 7300.001=%s",
+                   s32_ok_load ? "accepted" : "REJECTED", f64_dur,
+                   s32_bad_reject ? "rejected" : "ACCEPTED");
+    report(s32_ok_load && fabs(f64_dur - 7210.0) < 1e-9 && s32_bad_reject,
+           "duration-limit", a_detail);
+}
+
+/* ------------------------------------------------------------------ */
 /* 2. stream counters, flags and timestamps                           */
 /* ------------------------------------------------------------------ */
 
@@ -1742,6 +1798,7 @@ static void test_old_compat(void)
 int main(void)
 {
     test_config();
+    test_duration_limit();
     test_stream();
     test_file_stream();
     test_determinism();

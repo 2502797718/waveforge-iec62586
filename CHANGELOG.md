@@ -14,6 +14,23 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Golden-file fixtures for f32 and i24 output.
 - Python bindings over the stream API.
 
+## [1.0.1] - 2026-11-21
+
+### Changed
+
+- Raise the maximum `time.duration_s`, `segments[].duration_s` and `--duration` from
+  7200 s to 7300 s, so a 2 h aggregation block can include a 10 s window-closure
+  margin (`7210 s`). The limit is centralized as `WG_MAX_DURATION_S`
+  (CR-WAVEFORGE-001).
+- Document the `7210 s` recipe for A2.7.1 in the input format, signal catalog and
+  standard mapping.
+
+### Fixed
+
+- Make the self-test compile cleanly with Clang `-Werror` by initializing the
+  measurement variables used by the arbitrary-component and per-component
+  envelope checks.
+
 ## [1.0.0] - 2026-11-19
 
 Initial open-source release.

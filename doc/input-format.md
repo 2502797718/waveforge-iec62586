@@ -63,12 +63,14 @@ wg list
 
 | 选项 | 别名 | 含义 | 取值 |
 |---|---|---|---|
-| `--duration TIME` | `-d` | 总时长 | `60`、`60s`、`500ms`、`2min`、`1h`；范围 0.001–7200 s |
+| `--duration TIME` | `-d` | 总时长 | `60`、`60s`、`500ms`、`2min`、`1h`；范围 0.001–7300 s |
 | `--rate HZ` | `--sample-rate` | 采样率 | 整数 1000–1 000 000 |
 | `--frame N` | `--frame-samples` | 每帧点数 | 整数 1–65535 |
 | `--format f64\|f32\|i24` | — | 样本格式 | 默认 f64 |
 | `--start TIME` | `--start-utc` | 首样本 UTC 时间 | RFC 3339（如 `2026-11-18T00:00:00Z`、带 `+08:00` 偏移）或 epoch 秒 |
 | `--out FILE` | `-o` | 输出文件 | 默认 `out.bin` |
+
+> 需要 2 h 聚合块并额外留 10 s 让最后一个 10 min 窗闭合时，可设 `--duration 7210`；上限为 7300 s。
 
 ### 3.3 信号覆盖
 
@@ -162,7 +164,7 @@ TIME_S:ANGLE_DEG
 
 | 字段 | 类型 | 范围 | 默认 |
 |---|---|---|---|
-| `duration_s` | number | 0.001–7200 | 60 |
+| `duration_s` | number | 0.001–7300 | 60 |
 | `sample_rate_hz` | integer | 1000–1 000 000 | 51200 |
 | `start_utc_ns` | integer | ≥ 0 | 当前整秒 |
 
@@ -219,7 +221,7 @@ TIME_S:ANGLE_DEG
 
 | 字段 | 类型 | 说明 |
 |---|---|---|
-| `duration_s` | number | 0.001–7200 |
+| `duration_s` | number | 0.001–7300 |
 | `transition` | string | `immediate`（默认）或 `zero_crossing` |
 | `channel_delay_s` | 对象或数组 | 相对段起点的延时，≥ 0；`zero_crossing` 时配合本相过零点使用 |
 | `signal` | object | 只写需要覆盖的字段，其余继承上一层 |
@@ -430,7 +432,7 @@ wg gen --config h3.json --out h3.bin
 freq_hz: expected number > 0
 amp_pct.Ua: expected number in [0, 1000]
 phase_deg.Ub: expected number
-duration_s: expected number in [0.001, 7200]
+duration_s: expected number in [0.001, 7300]
 sample_rate_hz: expected integer in [1000, 1000000]
 frame_samples: expected integer in [1, 65535]
 channels[1]: expected one of Ua|Ub|Uc|Ia|Ib|Ic|In
