@@ -171,7 +171,7 @@ typedef struct {
 
 | 字段 | 类型 | 含义 |
 |---|---|---|
-| `generator_version` | string | 如 `WaveForge 1.0.1` |
+| `generator_version` | string | 如 `WaveForge 1.1.0` |
 | `config` | object | 生效配置摘要：`duration_s`、`sample_rate_hz`、`start_utc_ns`、`segment_count`、`format`、`frame_samples`、`channel_count`、`channels`、`nominal` |
 | `final_params` | object | 最终参数：`sample_rate_hz`、`start_utc_ns`、`format`、`frame_samples`、`channel_count` |
 | `signal` | object | 旧模型有效值：频率轮廓、逐通道幅值/相位、谐波/间谐波/载波、调制 |
@@ -195,7 +195,7 @@ typedef struct {
 
 ```json
 {
-  "generator_version": "WaveForge 1.0.1",
+  "generator_version": "WaveForge 1.1.0",
   "config": {
     "duration_s": 2,
     "sample_rate_hz": 51200,

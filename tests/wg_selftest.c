@@ -235,7 +235,7 @@ static void test_duration_limit(void)
         report(0, "duration-limit", "cannot create temporary config");
         return;
     }
-    (void)fputs("{\"time\":{\"duration_s\":7210}}", p_file);
+    (void)fputs("{\"time\":{\"duration_s\":86400}}", p_file);
     (void)fclose(p_file);
 
     wg_config_default(&st_cfg);
@@ -249,7 +249,7 @@ static void test_duration_limit(void)
         report(0, "duration-limit", "cannot create temporary config");
         return;
     }
-    (void)fputs("{\"time\":{\"duration_s\":7300.001}}", p_file);
+    (void)fputs("{\"time\":{\"duration_s\":0}}", p_file);
     (void)fclose(p_file);
 
     wg_config_default(&st_cfg);
@@ -258,10 +258,10 @@ static void test_duration_limit(void)
     (void)remove(a_bad_path);
 
     (void)snprintf(a_detail, sizeof(a_detail),
-                   "7210=%s (%.3f s) 7300.001=%s",
+                   "86400=%s (%.0f s) 0=%s",
                    s32_ok_load ? "accepted" : "REJECTED", f64_dur,
                    s32_bad_reject ? "rejected" : "ACCEPTED");
-    report(s32_ok_load && fabs(f64_dur - 7210.0) < 1e-9 && s32_bad_reject,
+    report(s32_ok_load && fabs(f64_dur - 86400.0) < 1e-9 && s32_bad_reject,
            "duration-limit", a_detail);
 }
 

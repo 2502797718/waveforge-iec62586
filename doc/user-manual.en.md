@@ -1,6 +1,6 @@
 # WaveForge User Manual
 
-> Version 1.0.1 (`WaveForge 1.0.1`)
+> Version 1.1.0 (`WaveForge 1.1.0`)
 > Platforms: Linux, WSL and macOS are the primary targets. Native Windows builds work for the CLI; the self-test assumes POSIX facilities.
 > This manual explains usage. For contracts and internals see [Architecture](architecture.md), [Input format](input-format.md) and [Output format](output-format.md).
 
@@ -131,6 +131,17 @@ Only the fields you set are replaced; everything else keeps the preset default.
 ./build/wg gen --test A1.2.2 --duration 10 --phase-step 5.0:30 --out step.bin
 ./build/wg gen --test A1.2.2 --system 60 --out a122_60.bin
 ```
+
+The CLI has a soft limit of 7300 s to prevent an accidental disk-filling run. Pass
+`--allow-long` for longer durations; the tool prints an estimated output size based on format and
+channel count:
+
+```sh
+./build/wg gen --test A2.7.1 --duration 24h --allow-long --out a271_24h.bin
+```
+
+The library and JSON `time.duration_s` / `segments[].duration_s` have no upper bound; they only
+require a finite positive number. `wg_run_stream()` does not write to disk and uses constant memory.
 
 Amplitude values may carry `%` (relative to the channel nominal) or `V`/`A` (absolute RMS). Without a unit, the channel's physical unit is assumed.
 
@@ -406,7 +417,8 @@ For i24, always read the header scales; never assume 220 V.
 | `NO_DEFAULT: ...` | preset lacks a standard default | supply the field via overrides or JSON `program` |
 | `CUSTOM: ...` | user must choose a channel/reference or value | follow the message |
 | `EXCLUDED: ...` | outside generator scope | do not substitute digital injection for hardware tests |
-| `duration_s: expected number in [0.001, 7300]` | duration out of range | use 0.001–7300 s |
+| `duration_s: expected number >= 0.001` | zero, negative or non-finite | use a finite positive number |
+| `duration_s: ... exceeds 7300; pass --allow-long ...` | CLI soft limit | add `--allow-long` or shorten |
 | `sample_rate_hz: expected integer in [1000, 1000000]` | rate out of range | use 1 k–1 MHz |
 | `frame_samples: expected integer in [1, 65535]` | frame length out of range | use 1–65535 |
 | `segments: expected total duration >= duration_s` | segments too short | make the sum equal `duration_s` |

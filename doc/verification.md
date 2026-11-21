@@ -62,7 +62,7 @@ make test
 | 11 | `custom-triangle` | 40–60 Hz、完整周期 6 s、12 s 时长 | 端点与周期正确 |
 | 12 | `no-default` | A6.2.5 返回 `NO_DEFAULT` 且 rc=1 | 字段路径可读 |
 | 13 | `old-compat` | 旧 `signal.harmonics` 与等价 program 的 RMS/相位一致 | 相对差 < 1e−6 |
-| 14 | `duration-limit` | `7210 s` 被接受，`7300.001 s` 被拒绝 | 上限 7300 s |
+| 14 | `duration-limit` | `86400 s` 被接受（库/JSON 无上限），`0 s` 被拒绝 | 仅要求有限正数 |
 
 期望输出：
 

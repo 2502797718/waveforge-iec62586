@@ -14,7 +14,10 @@
 #define WG_MAX_TONES           8
 #define WG_MAX_SEGMENTS        16
 
-/* 单次生成的时长范围（秒）。7300 = 2 h 聚合块 + 100 s 收尾余量。 */
+/*
+ * 库与 JSON 只要求时长为有限正数，不设上限；下面的是 CLI 默认软上限，
+ * 超过时需显式 --allow-long，避免误输入写满磁盘。
+ */
 #define WG_MIN_DURATION_S      0.001
 #define WG_MAX_DURATION_S      7300.0
 

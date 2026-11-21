@@ -66,3 +66,23 @@ jobs:
             done
             exit "$rc"
           fi
+
+  cli:
+    name: CLI duration guard
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build
+        run: make all
+
+      - name: Guard and allow-long
+        shell: bash
+        run: |
+          set -e
+          out=$(./build/wg gen --test A1.1.1 --duration 86400 --out /proc/wf.bin 2>&1 || true)
+          echo "$out" | grep -q -- "--allow-long"
+          out=$(./build/wg gen --test A1.1.1 --duration 86400 --allow-long --out /proc/wf.bin 2>&1 || true)
+          echo "$out" | grep -q "estimated output"
+          echo "$out" | grep -q "failed to write"

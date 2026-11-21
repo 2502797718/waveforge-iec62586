@@ -14,6 +14,20 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Golden-file fixtures for f32 and i24 output.
 - Python bindings over the stream API.
 
+## [1.1.0] - 2026-11-21
+
+### Added
+
+- `--allow-long` CLI flag. Durations above the 7300 s soft limit require this flag;
+  the tool then prints an estimated output size based on format and channel count.
+
+### Changed
+
+- The library and JSON `time.duration_s` / `segments[].duration_s` no longer have an
+  upper bound. They only require a finite positive number; the CLI keeps 7300 s as a
+  soft guard against accidental disk-filling runs.
+- Duration validation rejects non-finite JSON numbers and `inf`/`nan` CLI values.
+
 ## [1.0.1] - 2026-11-21
 
 ### Changed

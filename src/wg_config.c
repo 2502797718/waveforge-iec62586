@@ -8,6 +8,7 @@
 #include "wg_config.h"
 
 #include <errno.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -672,10 +673,23 @@ static int want_number(cfg_ctx *pst_x, const jval *pst_v, const char *pc_path,
 static int want_range(cfg_ctx *pst_x, const jval *pst_v, const char *pc_path,
                       double lo, double hi, double *p_d)
 {
-    if (pst_v == NULL || pst_v->type != J_NUM ||
+    if (pst_v == NULL || pst_v->type != J_NUM || !isfinite(pst_v->num) ||
         pst_v->num < lo || pst_v->num > hi) {
         snprintf(pst_x->err, pst_x->elen,
                  "%s: expected number in [%g, %g]", pc_path, lo, hi);
+        return -1;
+    }
+    *p_d = pst_v->num;
+    return 0;
+}
+
+static int want_min(cfg_ctx *pst_x, const jval *pst_v, const char *pc_path,
+                    double lo, double *p_d)
+{
+    if (pst_v == NULL || pst_v->type != J_NUM || !isfinite(pst_v->num) ||
+        pst_v->num < lo) {
+        snprintf(pst_x->err, pst_x->elen,
+                 "%s: expected number >= %g", pc_path, lo);
         return -1;
     }
     *p_d = pst_v->num;
@@ -2094,8 +2108,8 @@ static int load_time(cfg_ctx *pst_x, const jval *pst_v)
 
     jv = jo_get(pst_v, "duration_s");
     if (jv != NULL) {
-        if (want_range(pst_x, jv, "time.duration_s", WG_MIN_DURATION_S,
-                       WG_MAX_DURATION_S, &d) != 0) {
+        if (want_min(pst_x, jv, "time.duration_s", WG_MIN_DURATION_S,
+                     &d) != 0) {
             return -1;
         }
         pst_x->cfg->duration_s = d;
@@ -2207,8 +2221,8 @@ static int load_segments(cfg_ctx *pst_x, const jval *pst_v)
         }
 
         snprintf(path, sizeof(path), "segments[%zu].duration_s", k);
-        if (want_range(pst_x, jo_get(e, "duration_s"), path, WG_MIN_DURATION_S,
-                       WG_MAX_DURATION_S, &dur) != 0) {
+        if (want_min(pst_x, jo_get(e, "duration_s"), path, WG_MIN_DURATION_S,
+                     &dur) != 0) {
             return -1;
         }
 

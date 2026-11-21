@@ -1,6 +1,6 @@
 # WaveForge 使用手册
 
-> 版本：1.0.1（`WaveForge 1.0.1`）
+> 版本：1.1.0（`WaveForge 1.1.0`）
 > 适用平台：Linux / WSL / macOS（POSIX 工具链）；Windows 原生构建可用，但自测依赖 POSIX 接口。
 > 本文只讲**怎么用**；结构与契约见 [架构](architecture.md)、[输入格式](input-format.md)、[输出格式](output-format.md)。
 
@@ -185,6 +185,14 @@ A6.1.6        50/60  EXCLUDED: anti-alias proof belongs to analog front end
 # 在 5 s 处加 +30° 相位阶跃
 ./build/wg gen --test A1.2.2 --duration 10 --phase-step 5.0:30 --out step.bin
 ```
+
+默认 CLI 软上限 7300 s，防止误输入写满磁盘。更长时长显式加 `--allow-long`，程序会按格式与通道数打印预估文件大小：
+
+```sh
+./build/wg gen --test A2.7.1 --duration 24h --allow-long --out a271_24h.bin
+```
+
+库与 JSON 的 `time.duration_s`、`segments[].duration_s` 不设上限，只要求有限正数；流式 `wg_run_stream()` 不落盘，内存恒定。
 
 ### 5.3 60 Hz 系统
 
@@ -515,7 +523,8 @@ i24 的换算比例在文件头 `u_scale`/`i_scale` 中，不要写死 220 V。
 | `NO_DEFAULT: ...` | 预设缺标准默认值 | 用 `--freq/--amp/--harmonics` 或 JSON `program` 补字段 |
 | `CUSTOM: ...` | 该场景需要用户选择/给值 | 按提示补通道、参考通道或分量 |
 | `EXCLUDED: ...` | 不属发生器职责 | 不要用数字注入代替硬件试验 |
-| `duration_s: expected number in [0.001, 7300]` | 时长越界 | 改到 0.001–7300 s |
+| `duration_s: expected number >= 0.001` | 时长为 0、负或非有限 | 给有限正数 |
+| `duration_s: ... exceeds 7300; pass --allow-long ...` | CLI 软上限 | 加 `--allow-long`，或缩短时长 |
 | `sample_rate_hz: expected integer in [1000, 1000000]` | 采样率越界 | 改到 1 k–1 MHz |
 | `frame_samples: expected integer in [1, 65535]` | 帧长越界 | 改到 1–65535 |
 | `segments: expected total duration >= duration_s` | 段时长之和不足 | 让各段之和等于 `duration_s` |

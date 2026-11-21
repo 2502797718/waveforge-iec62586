@@ -21,6 +21,7 @@ static void usage(FILE *p_file)
             "      --system 50|60     system frequency (default 50)\n"
             "  -c, --config FILE      single-level JSON configuration\n"
             "  -d, --duration TIME    60, 60s, 2min, 11min\n"
+            "      --allow-long       allow duration > 7300 s (prints size estimate)\n"
             "      --freq HZ          fundamental frequency\n"
             "      --amp Ua=80%%,Ub=80%%  amplitudes (%% or V/A)\n"
             "      --phase 0,-120,120 phase per channel\n"

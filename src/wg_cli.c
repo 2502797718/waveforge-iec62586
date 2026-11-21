@@ -7,6 +7,7 @@
 #include "wg_config.h"
 
 #include <errno.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,6 +19,7 @@ enum {
     OPT_SYSTEM,
     OPT_CONFIG,
     OPT_DURATION,
+    OPT_ALLOW_LONG,
     OPT_FREQ,
     OPT_AMP,
     OPT_PHASE,
@@ -55,6 +57,7 @@ static const struct {
     { "-c", OPT_CONFIG, 1 },
     { "--duration", OPT_DURATION, 1 },
     { "-d", OPT_DURATION, 1 },
+    { "--allow-long", OPT_ALLOW_LONG, 0 },
     { "--freq", OPT_FREQ, 1 },
     { "--amp", OPT_AMP, 1 },
     { "--phase", OPT_PHASE, 1 },
@@ -206,7 +209,7 @@ static int parse_duration(const char *pc_s, double *p_d)
     }
     errno = 0;
     d = strtod(pc_s, &end);
-    if (errno == ERANGE || end == pc_s || d < 0.0) {
+    if (errno == ERANGE || end == pc_s || !isfinite(d) || d < 0.0) {
         return -1;
     }
     if (*end == '\0' || strcmp(end, "s") == 0) {
@@ -226,6 +229,26 @@ static int parse_duration(const char *pc_s, double *p_d)
         return 0;
     }
     return -1;
+}
+
+/* 仅用于 --allow-long 的提示：按样本格式、通道数与采样率估算文件大小。 */
+static double cli_estimate_bytes(const wg_config_t *pst_cfg)
+{
+    double f64_bytes_per_sample;
+
+    switch (pst_cfg->format) {
+    case WG_FMT_F32:
+        f64_bytes_per_sample = 4.0;
+        break;
+    case WG_FMT_I24:
+        f64_bytes_per_sample = 3.0;
+        break;
+    default:
+        f64_bytes_per_sample = 8.0;
+        break;
+    }
+    return pst_cfg->duration_s * (double)pst_cfg->sample_rate_hz *
+           (double)pst_cfg->channel_count * f64_bytes_per_sample;
 }
 
 /* ------------------------------------------------------------------ */
@@ -1034,6 +1057,7 @@ int32_t wg_cli_parse(int argc, char **argv, wg_config_t *pst_cfg,
     int32_t s32_sys = 50;
     int has_test = 0;
     int has_cfg = 0;
+    int allow_long = 0;
     const char *pc_test = NULL;
     const char *pc_cfg_path = NULL;
 
@@ -1166,13 +1190,15 @@ int32_t wg_cli_parse(int argc, char **argv, wg_config_t *pst_cfg,
             switch (a_opt[i].id) {
             case OPT_DURATION:
                 if (parse_duration(a_opt[i].val, &d) != 0 ||
-                    d < WG_MIN_DURATION_S || d > WG_MAX_DURATION_S) {
+                    d < WG_MIN_DURATION_S) {
                     snprintf(pc_err, err_len,
-                             "duration_s: expected number in [0.001, %.0f]",
-                             WG_MAX_DURATION_S);
+                             "duration_s: expected number >= 0.001");
                     return -1;
                 }
                 pst_cfg->duration_s = d;
+                break;
+            case OPT_ALLOW_LONG:
+                allow_long = 1;
                 break;
             case OPT_FREQ:
                 if (apply_freq(pst_cfg, a_opt[i].val, pc_err, err_len) != 0) {
@@ -1361,6 +1387,22 @@ int32_t wg_cli_parse(int argc, char **argv, wg_config_t *pst_cfg,
                      "segments: expected total duration >= duration_s");
             return -1;
         }
+    }
+
+    if (pst_cfg->duration_s > WG_MAX_DURATION_S) {
+        double f64_gib = cli_estimate_bytes(pst_cfg) /
+                         (1024.0 * 1024.0 * 1024.0);
+
+        if (allow_long == 0) {
+            snprintf(pc_err, err_len,
+                     "duration_s: %.0f exceeds %.0f; pass --allow-long to "
+                     "confirm (estimated output %.1f GiB)",
+                     pst_cfg->duration_s, WG_MAX_DURATION_S, f64_gib);
+            return -1;
+        }
+        fprintf(stderr,
+                "note: --allow-long enabled; estimated output %.1f GiB\n",
+                f64_gib);
     }
 
     return 0;
