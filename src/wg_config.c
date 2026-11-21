@@ -1507,9 +1507,9 @@ static int load_program_modulator(cfg_ctx *pst_x, const jval *pst_v,
                                   size_t ci, size_t mi,
                                   wg_component_t *pst_comp)
 {
-    static const char *const keys[10] = {
+    static const char *const keys[11] = {
         "kind", "from", "to", "period_s", "frequency_hz", "depth_pct",
-        "duty_pct", "phase_deg", "start_s", "duration_s"
+        "duty_pct", "phase_deg", "start_s", "duration_s", "hold"
     };
     char prefix[120];
     const jval *jv;
@@ -1522,7 +1522,7 @@ static int load_program_modulator(cfg_ctx *pst_x, const jval *pst_v,
         snprintf(pst_x->err, pst_x->elen, "%s: expected object", prefix);
         return -1;
     }
-    if (jo_unknown(pst_v, keys, 10u, prefix, pst_x->err, pst_x->elen) != 0) {
+    if (jo_unknown(pst_v, keys, 11u, prefix, pst_x->err, pst_x->elen) != 0) {
         return -1;
     }
 
@@ -1595,6 +1595,9 @@ static int load_program_modulator(cfg_ctx *pst_x, const jval *pst_v,
         LOAD_MOD_NUM(to, 1, v >= 0.0 && v <= 1000.0,
                      "expected number in [0, 1000]");
         LOAD_MOD_NUM(period_s, 1, v > 0.0, "expected number > 0");
+        LOAD_MOD_NUM(start_s, 0, v >= 0.0, "expected number >= 0");
+        LOAD_MOD_NUM(hold, 0, v >= 0.0 && v <= 1000.0,
+                     "expected number in [0, 1000]");
         break;
     case WG_MOD2_AMP_STEP:
         LOAD_MOD_NUM(from, 1, v >= 0.0 && v <= 1000.0,
@@ -1607,6 +1610,7 @@ static int load_program_modulator(cfg_ctx *pst_x, const jval *pst_v,
         LOAD_MOD_NUM(frequency_hz, 1, v > 0.0, "expected number > 0");
         LOAD_MOD_NUM(depth_pct, 1, v >= 0.0, "expected number >= 0");
         LOAD_MOD_NUM(phase_deg, 0, 1, "expected number");
+        LOAD_MOD_NUM(start_s, 0, v >= 0.0, "expected number >= 0");
         break;
     case WG_MOD2_AMP_RECT:
         LOAD_MOD_NUM(frequency_hz, 1, v > 0.0, "expected number > 0");
@@ -1614,6 +1618,7 @@ static int load_program_modulator(cfg_ctx *pst_x, const jval *pst_v,
         LOAD_MOD_NUM(duty_pct, 0, v >= 0.0 && v <= 100.0,
                      "expected number in [0, 100]");
         LOAD_MOD_NUM(phase_deg, 0, 1, "expected number");
+        LOAD_MOD_NUM(start_s, 0, v >= 0.0, "expected number >= 0");
         break;
     case WG_MOD2_FREQ_LINEAR:
         LOAD_MOD_NUM(from, 1, v > 0.0, "expected number > 0");
@@ -1624,6 +1629,7 @@ static int load_program_modulator(cfg_ctx *pst_x, const jval *pst_v,
         LOAD_MOD_NUM(from, 1, v > 0.0, "expected number > 0");
         LOAD_MOD_NUM(to, 1, v > 0.0, "expected number > 0");
         LOAD_MOD_NUM(period_s, 1, v > 0.0, "expected number > 0");
+        LOAD_MOD_NUM(start_s, 0, v >= 0.0, "expected number >= 0");
         break;
     case WG_MOD2_FREQ_STEP:
         LOAD_MOD_NUM(from, 1, v > 0.0, "expected number > 0");

@@ -1,6 +1,6 @@
 # WaveForge User Manual
 
-> Version 1.1.0 (`WaveForge 1.1.0`)
+> Version 1.2.0 (`WaveForge 1.2.0`)
 > Platforms: Linux, WSL and macOS are the primary targets. Native Windows builds work for the CLI; the self-test assumes POSIX facilities.
 > This manual explains usage. For contracts and internals see [Architecture](architecture.md), [Input format](input-format.md) and [Output format](output-format.md).
 
@@ -38,7 +38,7 @@ make test
 |---|---|
 | `build/libwaveforge.a` | static library (Signal Core + Preset Layer) |
 | `build/wg` | command-line generator |
-| `build/selftest` | 14 self-tests |
+| `build/selftest` | 16 self-tests |
 
 `sh tools/build.sh` cleans, rebuilds and runs the self-test.
 

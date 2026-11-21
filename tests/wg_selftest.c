@@ -1659,6 +1659,162 @@ static void test_custom_triangle(void)
     cap_free(&st_ctx);
 }
 
+static void test_phase_mask(void)
+{
+    const uint32_t u32_fs = 51200u;
+    const size_t z_n = 51200u;
+    const uint8_t au8_ch[3] = { (uint8_t)WG_CH_UA, (uint8_t)WG_CH_UB,
+                                (uint8_t)WG_CH_UC };
+    const double af64_nom[3] = { 220.0, 220.0, 220.0 };
+    const double af64_expect[3] = { 30.0, 0.0, 0.0 };
+    wg_builder_t *pst_b;
+    wg_handle_t *pst_wg;
+    wg_component_t st_c;
+    wg_event_t st_evt;
+    cap_ctx_t st_ctx;
+    char a_err[256];
+    char a_detail[512];
+    double af64_delta[3] = { 0.0, 0.0, 0.0 };
+    uint32_t c;
+    int s32_ok = 1;
+
+    pst_b = wg_builder_create(u32_fs, 0u);
+    if (pst_b == NULL) {
+        report(0, "phase-mask", "builder create failed");
+        return;
+    }
+    if (wg_builder_set_channels(pst_b, au8_ch, 3u, af64_nom) != 0
+        || wg_builder_set_duration(pst_b, 1.0) != 0
+        || wg_builder_set_output(pst_b, (uint8_t)WG_FMT_F64, 256u) != 0) {
+        wg_builder_destroy(pst_b);
+        report(0, "phase-mask", "builder setup failed");
+        return;
+    }
+    comp_init(&st_c, (uint8_t)WG_COMP_FUNDAMENTAL, 1.0, 50.0, 100.0,
+              0.0, 0u);
+    st_c.channel_mask = 0x07u;
+    if (wg_builder_add_component(pst_b, &st_c) != 0) {
+        wg_builder_destroy(pst_b);
+        report(0, "phase-mask", "add fundamental failed");
+        return;
+    }
+    (void)memset(&st_evt, 0, sizeof(st_evt));
+    st_evt.kind = (uint8_t)WG_EVENT_PHASE_STEP;
+    st_evt.channel_mask = 0x01u;
+    st_evt.time_s = 0.5;
+    st_evt.value = 30.0;
+    (void)wg_builder_add_event(pst_b, &st_evt);
+
+    pst_wg = wg_create_from_builder(pst_b, a_err, sizeof(a_err));
+    wg_builder_destroy(pst_b);
+    if (pst_wg == NULL) {
+        (void)snprintf(a_detail, sizeof(a_detail), "create failed: %s", a_err);
+        report(0, "phase-mask", a_detail);
+        return;
+    }
+    if (cap_init(&st_ctx, 3u, z_n) != 0 || cap_run(pst_wg, &st_ctx) != 0) {
+        wg_destroy(pst_wg);
+        cap_free(&st_ctx);
+        report(0, "phase-mask", "capture failed");
+        return;
+    }
+    wg_destroy(pst_wg);
+
+    for (c = 0u; c < 3u; c++) {
+        double f64_rms_b = 0.0;
+        double f64_ph_b = 0.0;
+        double f64_rms_a = 0.0;
+        double f64_ph_a = 0.0;
+
+        if (dft_window(st_ctx.p_plane[c], z_n, (double)u32_fs, 0.1, 0.4,
+                       50.0, &f64_rms_b, &f64_ph_b) != 0
+            || dft_window(st_ctx.p_plane[c], z_n, (double)u32_fs, 0.6, 0.9,
+                          50.0, &f64_rms_a, &f64_ph_a) != 0) {
+            s32_ok = 0;
+            break;
+        }
+        af64_delta[c] = wrap_deg(f64_ph_a - f64_ph_b);
+        if (fabs(wrap_deg(af64_delta[c] - af64_expect[c])) > 0.2) {
+            s32_ok = 0;
+        }
+        if (fabs(f64_rms_b - 220.0) > 0.2 || fabs(f64_rms_a - 220.0) > 0.2) {
+            s32_ok = 0;
+        }
+    }
+    cap_free(&st_ctx);
+
+    (void)snprintf(a_detail, sizeof(a_detail),
+                   "Ua=%.3f Ub=%.3f Uc=%.3f deg (expect 30/0/0)",
+                   af64_delta[0], af64_delta[1], af64_delta[2]);
+    report(s32_ok, "phase-mask", a_detail);
+}
+
+static void test_mod_start_hold(void)
+{
+    const uint32_t u32_fs = 51200u;
+    const size_t z_n = 102400u;
+    wg_builder_t *pst_b;
+    wg_handle_t *pst_wg;
+    wg_component_t st_c;
+    wg_modulator_t st_mod;
+    cap_ctx_t st_ctx;
+    char a_err[256];
+    char a_detail[512];
+    double f64_rms_before = 0.0;
+    double f64_rms_after = 0.0;
+    double f64_ph = 0.0;
+    int s32_ok;
+
+    pst_b = builder_single(u32_fs, 2.0);
+    if (pst_b == NULL) {
+        report(0, "mod-start-hold", "builder create failed");
+        return;
+    }
+    comp_init(&st_c, (uint8_t)WG_COMP_FUNDAMENTAL, 1.0, 50.0, 100.0,
+              0.0, 0u);
+    if (wg_builder_add_component(pst_b, &st_c) != 0) {
+        wg_builder_destroy(pst_b);
+        report(0, "mod-start-hold", "add fundamental failed");
+        return;
+    }
+    (void)memset(&st_mod, 0, sizeof(st_mod));
+    st_mod.kind = (uint8_t)WG_MOD2_AMP_TRIANGLE;
+    st_mod.from = 10.0;
+    st_mod.to = 90.0;
+    st_mod.period_s = 1000.0;
+    st_mod.start_s = 1.0;
+    st_mod.hold = 50.0;
+    (void)wg_builder_add_modulator(pst_b, 0u, &st_mod);
+
+    pst_wg = wg_create_from_builder(pst_b, a_err, sizeof(a_err));
+    wg_builder_destroy(pst_b);
+    if (pst_wg == NULL) {
+        (void)snprintf(a_detail, sizeof(a_detail), "create failed: %s", a_err);
+        report(0, "mod-start-hold", a_detail);
+        return;
+    }
+    if (cap_init(&st_ctx, 1u, z_n) != 0 || cap_run(pst_wg, &st_ctx) != 0) {
+        wg_destroy(pst_wg);
+        cap_free(&st_ctx);
+        report(0, "mod-start-hold", "capture failed");
+        return;
+    }
+    wg_destroy(pst_wg);
+
+    s32_ok = (dft_window(st_ctx.p_plane[0], z_n, (double)u32_fs, 0.2, 0.6,
+                         50.0, &f64_rms_before, &f64_ph) == 0)
+          && (dft_window(st_ctx.p_plane[0], z_n, (double)u32_fs, 1.0, 1.4,
+                         50.0, &f64_rms_after, &f64_ph) == 0)
+          && (fabs(f64_rms_before - 110.0) <= 0.3)
+          && (fabs(f64_rms_after - 22.1) <= 0.5);
+    cap_free(&st_ctx);
+
+    (void)snprintf(a_detail, sizeof(a_detail),
+                   "hold=%.3f V start=%.3f V (expect 110.0/22.1)",
+                   f64_rms_before, f64_rms_after);
+    report(s32_ok, "mod-start-hold", a_detail);
+}
+
 static void test_no_default(void)
 {
     wg_config_t st_cfg;
@@ -1808,6 +1964,8 @@ int main(void)
     test_builder_arbitrary();
     test_per_component_envelope();
     test_stacked_modulation();
+    test_phase_mask();
+    test_mod_start_hold();
     test_custom_triangle();
     test_no_default();
     test_old_compat();

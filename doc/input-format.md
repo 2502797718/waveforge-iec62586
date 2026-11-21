@@ -295,15 +295,17 @@ TIME_S:ANGLE_DEG
 |---|---|---|
 | `amp_const` | `from` | — |
 | `amp_linear` | `from`、`to`、`duration_s` | — |
-| `amp_triangle` | `from`、`to`、`period_s` | — |
+| `amp_triangle` | `from`、`to`、`period_s` | `start_s`、`hold` |
 | `amp_step` | `from`、`to`、`start_s` | — |
-| `amp_sine` | `frequency_hz`、`depth_pct` | `phase_deg` |
-| `amp_rect` | `frequency_hz`、`depth_pct` | `duty_pct`（默认 0）、`phase_deg` |
+| `amp_sine` | `frequency_hz`、`depth_pct` | `phase_deg`、`start_s` |
+| `amp_rect` | `frequency_hz`、`depth_pct` | `duty_pct`（默认 0）、`phase_deg`、`start_s` |
 | `freq_linear` | `from`、`to`、`duration_s` | 仅基波 |
-| `freq_triangle` | `from`、`to`、`period_s` | 仅基波 |
+| `freq_triangle` | `from`、`to`、`period_s` | `start_s`；仅基波 |
 | `freq_step` | `from`、`to`、`start_s` | 仅基波 |
 
 - `amp_*` 的 `from`/`to` 单位为 %，范围 0–1000。
+- `amp_triangle` 的 `start_s` 前保持 `hold`（%，默认 0），从 `start_s` 起开始三角；若 `start_s > 0` 且省略 `hold`，该分量在起始前幅值为 0。
+- `amp_sine`/`amp_rect` 在 `start_s` 前不调制；`freq_triangle` 在 `start_s` 前保持 `from`。
 - `freq_*` 的 `from`/`to` 单位为 Hz，必须 > 0；整个 program 最多一条 `FREQ_*`。
 - 未知 `kind` 直接拒绝，不降级为“无调制”。
 - 同一个分量可叠加多条调制器，幅值因子相乘。
@@ -314,7 +316,7 @@ TIME_S:ANGLE_DEG
 |---|---|---|
 | `kind` | string | `amp_step` / `phase_step` |
 | `time_s` | number | `[0, duration_s]`，相对全局起点 |
-| `channel_mask` | 整数 0–127 或通道数组/字符串 | bit n = 通道 n；省略表示所有通道 |
+| `channel_mask` | 整数 0–127 或通道数组/字符串 | bit n = 通道 n；省略表示所有通道；`phase_step` 只改 mask 内通道的相位偏移 |
 | `value` | number | `amp_step` 为幅值 %；`phase_step` 为角度 ° |
 | `duration_s` | number | 过渡时长，≥ 0；当前实现按立即生效处理 |
 

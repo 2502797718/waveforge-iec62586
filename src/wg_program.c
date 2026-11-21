@@ -205,6 +205,10 @@ int32_t prv_modulator_validate(const wg_modulator_t *pst_mod, uint8_t u8_comp_ki
                        "expected number in [0, 1000]");
         PRV2_CHECK_NUM(period_s, pst_mod->period_s >= 0.0,
                        "expected number >= 0");
+        PRV2_CHECK_NUM(start_s, pst_mod->start_s >= 0.0,
+                       "expected number >= 0");
+        PRV2_CHECK_NUM(hold, pst_mod->hold >= 0.0 && pst_mod->hold <= PRV2_AMP_PCT_MAX,
+                       "expected number in [0, 1000]");
         break;
     case WG_MOD2_AMP_STEP:
         PRV2_CHECK_NUM(from, pst_mod->from >= 0.0 && pst_mod->from <= PRV2_AMP_PCT_MAX,
@@ -220,6 +224,8 @@ int32_t prv_modulator_validate(const wg_modulator_t *pst_mod, uint8_t u8_comp_ki
         PRV2_CHECK_NUM(depth_pct, pst_mod->depth_pct >= 0.0,
                        "expected number >= 0");
         PRV2_CHECK_NUM(phase_deg, 1, "expected finite number");
+        PRV2_CHECK_NUM(start_s, pst_mod->start_s >= 0.0,
+                       "expected number >= 0");
         break;
     case WG_MOD2_AMP_RECT:
         PRV2_CHECK_NUM(frequency_hz, pst_mod->frequency_hz >= 0.0,
@@ -229,6 +235,8 @@ int32_t prv_modulator_validate(const wg_modulator_t *pst_mod, uint8_t u8_comp_ki
         PRV2_CHECK_NUM(duty_pct, pst_mod->duty_pct >= 0.0 && pst_mod->duty_pct <= 100.0,
                        "expected number in [0, 100]");
         PRV2_CHECK_NUM(phase_deg, 1, "expected finite number");
+        PRV2_CHECK_NUM(start_s, pst_mod->start_s >= 0.0,
+                       "expected number >= 0");
         break;
     case WG_MOD2_FREQ_LINEAR:
         PRV2_CHECK_NUM(from, pst_mod->from > 0.0, "expected number > 0");
@@ -240,6 +248,8 @@ int32_t prv_modulator_validate(const wg_modulator_t *pst_mod, uint8_t u8_comp_ki
         PRV2_CHECK_NUM(from, pst_mod->from > 0.0, "expected number > 0");
         PRV2_CHECK_NUM(to, pst_mod->to > 0.0, "expected number > 0");
         PRV2_CHECK_NUM(period_s, pst_mod->period_s >= 0.0,
+                       "expected number >= 0");
+        PRV2_CHECK_NUM(start_s, pst_mod->start_s >= 0.0,
                        "expected number >= 0");
         break;
     case WG_MOD2_FREQ_STEP:
@@ -651,11 +661,17 @@ static double prv2_amp_mod_factor(const wg_modulator_t *pst_mod, double f64_t)
                 + (pst_mod->to - pst_mod->from)
                   * prv2_clamp01(f64_t / pst_mod->duration_s)) / 100.0;
     case WG_MOD2_AMP_TRIANGLE:
+        if (f64_t < pst_mod->start_s) {
+            return pst_mod->hold / 100.0;
+        }
         return prv2_triangle(pst_mod->from, pst_mod->to, pst_mod->period_s,
-                             f64_t) / 100.0;
+                             f64_t - pst_mod->start_s) / 100.0;
     case WG_MOD2_AMP_STEP:
         return (f64_t >= pst_mod->start_s ? pst_mod->to : pst_mod->from) / 100.0;
     case WG_MOD2_AMP_SINE:
+        if (f64_t < pst_mod->start_s) {
+            return 1.0;
+        }
         f64_depth = pst_mod->depth_pct / 100.0;
         return 1.0 + f64_depth * cos(PRV_TWO_PI * pst_mod->frequency_hz * f64_t
                                      + pst_mod->phase_deg * PRV_DEG2RAD);
@@ -663,7 +679,7 @@ static double prv2_amp_mod_factor(const wg_modulator_t *pst_mod, double f64_t)
         double f64_duty;
         double f64_pos;
 
-        if (!(pst_mod->frequency_hz > 0.0)) {
+        if (!(pst_mod->frequency_hz > 0.0) || f64_t < pst_mod->start_s) {
             return 1.0;
         }
         f64_duty = prv2_clamp01(pst_mod->duty_pct / 100.0);
@@ -705,8 +721,13 @@ static int prv2_freq_mod_value(const wg_modulator_t *pst_mod, double f64_t,
         }
         return 1;
     case WG_MOD2_FREQ_TRIANGLE:
-        *pf64_out = prv2_triangle(pst_mod->from, pst_mod->to,
-                                  pst_mod->period_s, f64_t);
+        if (f64_t < pst_mod->start_s) {
+            *pf64_out = pst_mod->from;
+        } else {
+            *pf64_out = prv2_triangle(pst_mod->from, pst_mod->to,
+                                      pst_mod->period_s,
+                                      f64_t - pst_mod->start_s);
+        }
         return 1;
     case WG_MOD2_FREQ_STEP:
         *pf64_out = (f64_t >= pst_mod->start_s) ? pst_mod->to : pst_mod->from;
@@ -884,7 +905,15 @@ void prv_program_advance_events(wg_handle_t *pst_wg, double f64_t_abs)
         }
 
         if (pst_evt->kind == (uint8_t)WG_EVENT_PHASE_STEP) {
-            pst_wg->f64_phase_offset += pst_evt->value * PRV_DEG2RAD;
+            for (i = 0u; i < (uint32_t)pst_wg->cfg.channel_count; i++) {
+                uint8_t u8_ch = pst_wg->cfg.channels[i];
+
+                if (pst_evt->channel_mask != 0u
+                    && prv2_channel_in_mask(pst_evt->channel_mask, u8_ch) == 0) {
+                    continue;
+                }
+                pst_wg->af64_phase_offset[u8_ch] += pst_evt->value * PRV_DEG2RAD;
+            }
         } else {
             for (i = 0u; i < (uint32_t)pst_wg->cfg.channel_count; i++) {
                 uint8_t u8_ch = pst_wg->cfg.channels[i];

@@ -365,8 +365,9 @@ static void prv_json_modulator(FILE *p_file, const wg_modulator_t *pst_mod)
         break;
     case WG_MOD2_AMP_TRIANGLE:
         (void)fprintf(p_file, ", \"from\": %.17g, \"to\": %.17g, "
-                      "\"period_s\": %.17g", pst_mod->from, pst_mod->to,
-                      pst_mod->period_s);
+                      "\"period_s\": %.17g, \"start_s\": %.17g, "
+                      "\"hold\": %.17g", pst_mod->from, pst_mod->to,
+                      pst_mod->period_s, pst_mod->start_s, pst_mod->hold);
         break;
     case WG_MOD2_AMP_STEP:
         (void)fprintf(p_file, ", \"from\": %.17g, \"to\": %.17g, "
@@ -375,16 +376,18 @@ static void prv_json_modulator(FILE *p_file, const wg_modulator_t *pst_mod)
         break;
     case WG_MOD2_AMP_SINE:
         (void)fprintf(p_file, ", \"frequency_hz\": %.17g, "
-                      "\"depth_pct\": %.17g, \"phase_deg\": %.17g",
-                      pst_mod->frequency_hz, pst_mod->depth_pct,
-                      pst_mod->phase_deg);
+                      "\"depth_pct\": %.17g, \"phase_deg\": %.17g, "
+                      "\"start_s\": %.17g", pst_mod->frequency_hz,
+                      pst_mod->depth_pct, pst_mod->phase_deg,
+                      pst_mod->start_s);
         break;
     case WG_MOD2_AMP_RECT:
         (void)fprintf(p_file, ", \"frequency_hz\": %.17g, "
                       "\"depth_pct\": %.17g, \"duty_pct\": %.17g, "
-                      "\"phase_deg\": %.17g", pst_mod->frequency_hz,
-                      pst_mod->depth_pct, pst_mod->duty_pct,
-                      pst_mod->phase_deg);
+                      "\"phase_deg\": %.17g, \"start_s\": %.17g",
+                      pst_mod->frequency_hz, pst_mod->depth_pct,
+                      pst_mod->duty_pct, pst_mod->phase_deg,
+                      pst_mod->start_s);
         break;
     case WG_MOD2_FREQ_LINEAR:
         (void)fprintf(p_file, ", \"from\": %.17g, \"to\": %.17g, "
@@ -393,8 +396,9 @@ static void prv_json_modulator(FILE *p_file, const wg_modulator_t *pst_mod)
         break;
     case WG_MOD2_FREQ_TRIANGLE:
         (void)fprintf(p_file, ", \"from\": %.17g, \"to\": %.17g, "
-                      "\"period_s\": %.17g", pst_mod->from, pst_mod->to,
-                      pst_mod->period_s);
+                      "\"period_s\": %.17g, \"start_s\": %.17g",
+                      pst_mod->from, pst_mod->to, pst_mod->period_s,
+                      pst_mod->start_s);
         break;
     case WG_MOD2_FREQ_STEP:
         (void)fprintf(p_file, ", \"from\": %.17g, \"to\": %.17g, "

@@ -53,7 +53,7 @@ struct wg_handle {
     /* program（分量 + 调制链 + 事件）求值状态；旧路径不使用。 */
     uint8_t  u8_program_active;
     uint16_t u16_evt_next;
-    double   f64_phase_offset;
+    double   af64_phase_offset[WG_MAX_CHANNELS];
     uint8_t  au8_prog_amp_set[WG_MAX_CHANNELS];
     double   af64_prog_amp_pct[WG_MAX_CHANNELS];
 };

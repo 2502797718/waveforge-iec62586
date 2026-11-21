@@ -71,8 +71,8 @@ void prv_state_reset(wg_handle_t *pst_wg)
     pst_wg->f64_phase = 0.0;
     pst_wg->u64_cursor = 0u;
     pst_wg->u16_evt_next = 0u;
-    pst_wg->f64_phase_offset = 0.0;
     for (u32_idx = 0u; u32_idx < (uint32_t)WG_MAX_CHANNELS; u32_idx++) {
+        pst_wg->af64_phase_offset[u32_idx] = 0.0;
         pst_wg->au8_amp_seg[u32_idx] = 0u;
         pst_wg->au8_amp_target[u32_idx] = 0u;
         pst_wg->au8_amp_pending[u32_idx] = 0u;
@@ -105,8 +105,6 @@ void prv_gen_frame(wg_handle_t *pst_wg, uint32_t u32_frames, wg_frame_t *pst_fra
         if (pst_wg->u8_program_active != 0u) {
             prv_program_advance_events(pst_wg, f64_t_abs);
         }
-        const double f64_phase_eff = pst_wg->f64_phase
-                                   + pst_wg->f64_phase_offset;
 
         /* 段边界：立即切换，或挂起等待各通道下一个上升过零点。 */
         if (u32_seg > 0u && u64_n == pst_wg->au64_seg_start[u32_seg]) {
@@ -127,6 +125,8 @@ void prv_gen_frame(wg_handle_t *pst_wg, uint32_t u32_frames, wg_frame_t *pst_fra
 
         for (u32_pos = 0u; u32_pos < u32_ch_count; u32_pos++) {
             const uint8_t u8_ch = pst_wg->cfg.channels[u32_pos];
+            const double f64_phase_eff = pst_wg->f64_phase
+                                       + pst_wg->af64_phase_offset[u8_ch];
             const double f64_cos = (pst_wg->u8_program_active != 0u)
                 ? prv_program_fund_cos(pst_wg, u8_ch, f64_phase_eff)
                 : cos(pst_wg->f64_phase

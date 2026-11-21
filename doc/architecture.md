@@ -35,7 +35,7 @@
 | [`src/wg_signal.c`](../src/wg_signal.c) | 旧 `wg_signal_t` 求值路径（program 为空时使用） |
 | [`src/wg_writer.c`](../src/wg_writer.c) | 文件头/帧头/结束记录、manifest、SHA-256 调用 |
 | [`apps/wg_main.c`](../apps/wg_main.c) | CLI 入口（仅 file 输出） |
-| [`tests/wg_selftest.c`](../tests/wg_selftest.c) | 14 项自测 |
+| [`tests/wg_selftest.c`](../tests/wg_selftest.c) | 16 项自测 |
 
 ## 3. 数据流
 
@@ -106,12 +106,12 @@ typedef struct {
 |---|---|---|
 | `amp_const` | 常数幅值因子 | `from`（%） |
 | `amp_linear` | `duration_s` 内 `from → to` 线性，之后保持 | `from/to/duration_s` |
-| `amp_triangle` | `period_s` 为完整周期，`from ↔ to` 往返 | `from/to/period_s` |
+| `amp_triangle` | `period_s` 为完整周期，`from ↔ to` 往返；`start_s` 前保持 `hold` | `from/to/period_s/start_s/hold` |
 | `amp_step` | `start_s` 时刻由 `from` 跳到 `to` | `from/to/start_s` |
-| `amp_sine` | `1 + depth/100 × cos(2π·fm·t + φ)` | `frequency_hz/depth_pct/phase_deg` |
-| `amp_rect` | 占空比内 `1 + depth/200`，其余 `1 − depth/200` | `frequency_hz/depth_pct/duty_pct/phase_deg` |
+| `amp_sine` | `1 + depth/100 × cos(2π·fm·t + φ)`；`start_s` 前不调制 | `frequency_hz/depth_pct/phase_deg/start_s` |
+| `amp_rect` | 占空比内 `1 + depth/200`，其余 `1 − depth/200`；`start_s` 前不调制 | `frequency_hz/depth_pct/duty_pct/phase_deg/start_s` |
 | `freq_linear` | 频率 `from → to` 线性 | `from/to/duration_s` |
-| `freq_triangle` | 频率三角，`period_s` 为完整往返 | `from/to/period_s` |
+| `freq_triangle` | 频率三角，`period_s` 为完整往返；`start_s` 前保持 `from` | `from/to/period_s/start_s` |
 | `freq_step` | 频率在 `start_s` 阶跃 | `from/to/start_s` |
 
 program 调制器的时间参数使用**全局绝对时间**（从样本 0 起算），不是段内局部时间。
@@ -121,7 +121,7 @@ program 调制器的时间参数使用**全局绝对时间**（从样本 0 起�
 | `kind` | `value` 含义 | 实际效果 |
 |---|---|---|
 | `amp_step` | 幅值百分比 | 从 `time_s` 起把该通道**基波**幅值设为 `value`；以基波为基准的谐波随之缩放，间谐波/载波不变 |
-| `phase_step` | 角度（°） | 从 `time_s` 起给积分相位加固定偏移；各分量按 `order` 缩放（见 §5.3） |
+| `phase_step` | 角度（°） | 从 `time_s` 起给 `channel_mask` 内每个通道的积分相位加固定偏移；各通道偏移独立，分量按 `order` 缩放（见 §5.3） |
 
 事件在 `wg_create()` 时按 `time_s` 稳定升序排序，同一时刻保持数组顺序。
 
@@ -227,7 +227,7 @@ apm900-waveform-sim-20261118/
 ├─ apps/
 │  └─ wg_main.c             CLI 入口
 ├─ tests/
-│  └─ wg_selftest.c         14 项自测
+│  └─ wg_selftest.c         16 项自测
 ├─ examples/
 │  ├─ basic.json            基础 JSON 配置
 │  ├─ harmonics.json        谐波配置

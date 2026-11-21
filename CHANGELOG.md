@@ -14,6 +14,20 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Golden-file fixtures for f32 and i24 output.
 - Python bindings over the stream API.
 
+## [1.2.0] - 2026-11-22
+
+### Added
+
+- `start_s` for `amp_triangle`, `amp_sine`, `amp_rect` and `freq_triangle`;
+  `hold` for `amp_triangle`. Before `start_s` the triangle holds `hold`, sine/rect
+  apply no modulation, and frequency triangle holds `from`.
+- Manifest records `start_s` / `hold` for the affected modulators.
+
+### Fixed
+
+- `phase_step` now updates a per-channel phase offset according to `channel_mask`.
+  Previously the offset was global, so a step masked to Ua also shifted Ub/Uc.
+
 ## [1.1.0] - 2026-11-21
 
 ### Added

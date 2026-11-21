@@ -34,7 +34,7 @@ ctest --test-dir build/cmake --output-on-failure
 ## Tests and evidence
 
 - Any change to the signal model, phase integration, file format, config parsing or scenario table
-  must keep `make test` at 14/14 and re-run the six regression scenarios listed in
+  must keep `make test` at 16/16 and re-run the six regression scenarios listed in
   [doc/verification.md](doc/verification.md).
 - New behavior needs a self-test or an example that demonstrates it.
 - Independent verification (`tools/verify.py`, `tools/check_acceptance.py`) must not link the
@@ -76,7 +76,7 @@ ctest --test-dir build/cmake --output-on-failure
   可运行仓库自带的 `.clang-format`。
 - **分层约束**：预设层只通过 `wg_program_add_*` 填默认值，不采样、不写文件；不引入标准库与
   `libm` 之外的依赖。
-- **测试**：改动信号模型、相位积分、文件格式、配置解析或场景表时，必须保持 14 项自测通过，
+- **测试**：改动信号模型、相位积分、文件格式、配置解析或场景表时，必须保持 16 项自测通过，
   并重跑 [校验文档](doc/verification.md) 中的 6 个回归场景。
 - **提交/PR**：一个提交只做一件事；说明改了什么、为什么、跑了哪些命令；用户可见变更写入
   `CHANGELOG.md` 的 `[Unreleased]`。

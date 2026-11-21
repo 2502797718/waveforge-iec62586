@@ -39,7 +39,7 @@
 
 f32/i24 的量化误差按格式单独考虑；i24 用文件头 `u_scale`/`i_scale` 还原。
 
-## 3. selftest 14 项
+## 3. selftest 16 项
 
 运行：
 
@@ -63,6 +63,8 @@ make test
 | 12 | `no-default` | A6.2.5 返回 `NO_DEFAULT` 且 rc=1 | 字段路径可读 |
 | 13 | `old-compat` | 旧 `signal.harmonics` 与等价 program 的 RMS/相位一致 | 相对差 < 1e−6 |
 | 14 | `duration-limit` | `86400 s` 被接受（库/JSON 无上限），`0 s` 被拒绝 | 仅要求有限正数 |
+| 15 | `phase-mask` | 3 通道，`phase_step` 只作用于 Ua | Ua +30°，Ub/Uc 0° |
+| 16 | `mod-start-hold` | `amp_triangle` 的 `start_s`/`hold` | 起始前 110.0 V，起始后 22.1 V |
 
 期望输出：
 
@@ -181,7 +183,7 @@ python3 tools/check_acceptance.py a8-1-3 a813.bin
 runs/<run-id>/
 ├─ command.txt              实际命令与环境
 ├─ build.log / clean.log    构建输出（0 warning）
-├─ selftest.log             14 项自测输出
+├─ selftest.log             16 项自测输出
 ├─ *.bin                    波形文件
 ├─ *.bin.manifest.json      对应的 manifest
 ├─ check/                   场景化验收 JSON

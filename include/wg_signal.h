@@ -56,12 +56,14 @@ typedef enum {
  * 调制项。字段按 kind 取用，未用字段置 0：
  *   AMP_CONST      from 为常数因子（%）。
  *   AMP_LINEAR     duration_s 内从 from 线性到 to。
- *   AMP_TRIANGLE   period_s 为完整周期，在 from 与 to 之间往返。
+ *   AMP_TRIANGLE   period_s 为完整周期，在 from 与 to 之间往返；
+ *                  start_s 前保持 hold（%），从 start_s 起开始三角。
  *   AMP_STEP       start_s 时刻从 from 跳到 to。
- *   AMP_SINE       frequency_hz / depth_pct / phase_deg。
- *   AMP_RECT       frequency_hz / depth_pct / duty_pct / phase_deg。
+ *   AMP_SINE       frequency_hz / depth_pct / phase_deg；start_s 前不调制。
+ *   AMP_RECT       frequency_hz / depth_pct / duty_pct / phase_deg；start_s 前不调制。
  *   FREQ_*         仅允许挂在基波分量上，作为全局频率轮廓（from/to 为 Hz）；
- *                  FREQ_LINEAR 用 duration_s，FREQ_STEP 用 start_s。
+ *                  FREQ_LINEAR 用 duration_s，FREQ_TRIANGLE 在 start_s 前保持 from，
+ *                  FREQ_STEP 用 start_s。
  */
 typedef struct {
     uint8_t kind;
@@ -74,6 +76,7 @@ typedef struct {
     double  phase_deg;
     double  start_s;
     double  duration_s;
+    double  hold;
 } wg_modulator_t;
 
 /*
