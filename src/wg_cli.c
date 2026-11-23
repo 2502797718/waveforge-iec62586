@@ -781,18 +781,76 @@ static int split_colon(const char *pc_s, char a_tok[][64], int max)
     return n;
 }
 
-/* sine:FM:DEPTH[:PHASE]  or  rect:FM:DEPTH:DUTY[:PHASE] */
+/* 通道名列表（逗号分隔），返回位掩码。 */
+static int parse_channel_list(const char *pc_list, uint8_t *pu8_mask)
+{
+    const char *p = pc_list;
+    uint8_t u8_mask = 0u;
+
+    if (*p == '\0') {
+        return -1;
+    }
+    while (*p != '\0') {
+        char a_name[8];
+        size_t n = 0u;
+        int ch;
+
+        while (*p == ' ' || *p == '\t') {
+            p += 1;
+        }
+        while (*p != '\0' && *p != ',') {
+            if (n + 1u < sizeof(a_name)) {
+                a_name[n] = *p;
+                n += 1u;
+            }
+            p += 1;
+        }
+        while (n > 0u && (a_name[n - 1u] == ' ' || a_name[n - 1u] == '\t')) {
+            n -= 1u;
+        }
+        a_name[n] = '\0';
+        ch = chan_index(a_name);
+        if (ch < 0) {
+            return -1;
+        }
+        u8_mask = (uint8_t)(u8_mask | (1u << ch));
+        if (*p == ',') {
+            p += 1;
+        }
+    }
+    *pu8_mask = u8_mask;
+    return 0;
+}
+
+/*
+ * sine:FM:DEPTH[:PHASE][:channels=Ia,Ib,Ic]
+ * rect:FM:DEPTH:DUTY[:PHASE][:channels=Ia,Ib,Ic]
+ */
 static int parse_mod_option(const char *pc_val, wg_modulator_t *pst_mod,
                             char *pc_err, size_t err_len)
 {
-    char a_tok[5][64];
-    int n = split_colon(pc_val, a_tok, 5);
+    char a_tok[6][64];
+    int n = split_colon(pc_val, a_tok, 6);
     double fm = 0.0;
     double depth = 0.0;
     double duty = 50.0;
     double phase = 0.0;
+    uint8_t u8_mask = 0u;
 
     memset(pst_mod, 0, sizeof(*pst_mod));
+    if (n < 1) {
+        snprintf(pc_err, err_len, "mod: expected at least a kind");
+        return -1;
+    }
+    if (strncmp(a_tok[n - 1], "channels=", 9u) == 0) {
+        if (parse_channel_list(a_tok[n - 1] + 9, &u8_mask) != 0) {
+            snprintf(pc_err, err_len,
+                     "mod: channels= expected Ua|Ub|Uc|Ia|Ib|Ic|In list");
+            return -1;
+        }
+        n -= 1;
+    }
+    pst_mod->channel_mask = u8_mask;
 
     if (n >= 3 && strcmp(a_tok[0], "sine") == 0 && (n == 3 || n == 4)) {
         if (parse_double_exact(a_tok[1], &fm) == 0 && fm > 0.0 &&
@@ -824,8 +882,8 @@ static int parse_mod_option(const char *pc_val, wg_modulator_t *pst_mod,
     }
 
     snprintf(pc_err, err_len,
-             "mod: expected sine:FM:DEPTH[:PHASE] or "
-             "rect:FM:DEPTH:DUTY[:PHASE]");
+             "mod: expected sine:FM:DEPTH[:PHASE][:channels=...] or "
+             "rect:FM:DEPTH:DUTY[:PHASE][:channels=...]");
     return -1;
 }
 
@@ -1349,6 +1407,13 @@ int32_t wg_cli_parse(int argc, char **argv, wg_config_t *pst_cfg,
         }
 
         for (k = 0u; k < mod_n; ++k) {
+            if (a_mod[k].channel_mask != 0u
+                && (a_mod[k].channel_mask
+                    & (uint8_t)~pst_fund->channel_mask) != 0u) {
+                snprintf(pc_err, err_len,
+                         "mod: channels: channel not enabled by configuration");
+                return -1;
+            }
             if (cli_add_mod(pst_fund, &a_mod[k], pc_err, err_len) != 0) {
                 return -1;
             }

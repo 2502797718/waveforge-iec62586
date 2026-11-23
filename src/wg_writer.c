@@ -408,6 +408,11 @@ static void prv_json_modulator(FILE *p_file, const wg_modulator_t *pst_mod)
     default:
         break;
     }
+    /* 掩码为 0 时不输出，保持旧配置的 manifest 逐字节不变。 */
+    if (pst_mod->channel_mask != 0u) {
+        (void)fprintf(p_file, ", \"channel_mask\": %u",
+                      (unsigned)pst_mod->channel_mask);
+    }
     (void)fputc('}', p_file);
 }
 

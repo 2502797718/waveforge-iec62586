@@ -1507,13 +1507,14 @@ static int load_program_modulator(cfg_ctx *pst_x, const jval *pst_v,
                                   size_t ci, size_t mi,
                                   wg_component_t *pst_comp)
 {
-    static const char *const keys[11] = {
+    static const char *const keys[12] = {
         "kind", "from", "to", "period_s", "frequency_hz", "depth_pct",
-        "duty_pct", "phase_deg", "start_s", "duration_s", "hold"
+        "duty_pct", "phase_deg", "start_s", "duration_s", "hold", "channels"
     };
     char prefix[120];
     const jval *jv;
     wg_modulator_t st_mod;
+    uint8_t u8_mod_mask = 0u;
     int kind;
 
     snprintf(prefix, sizeof(prefix), "program.components[%zu].modulators[%zu]",
@@ -1522,7 +1523,7 @@ static int load_program_modulator(cfg_ctx *pst_x, const jval *pst_v,
         snprintf(pst_x->err, pst_x->elen, "%s: expected object", prefix);
         return -1;
     }
-    if (jo_unknown(pst_v, keys, 11u, prefix, pst_x->err, pst_x->elen) != 0) {
+    if (jo_unknown(pst_v, keys, 12u, prefix, pst_x->err, pst_x->elen) != 0) {
         return -1;
     }
 
@@ -1640,6 +1641,33 @@ static int load_program_modulator(cfg_ctx *pst_x, const jval *pst_v,
         break;
     }
 #undef LOAD_MOD_NUM
+
+    /*
+     * 调制器级通道选择：省略表示本分量全部通道。FREQ_* 是全局频率轮廓，
+     * 不接受通道掩码；AMP_* 掩码必须是所属分量掩码的子集。
+     */
+    jv = jo_get(pst_v, "channels");
+    if (jv != NULL) {
+        if (load_channel_mask(pst_x, jv, prefix, "channels",
+                              &u8_mod_mask) != 0) {
+            return -1;
+        }
+        if ((kind == (int)WG_MOD2_FREQ_LINEAR
+             || kind == (int)WG_MOD2_FREQ_TRIANGLE
+             || kind == (int)WG_MOD2_FREQ_STEP) && u8_mod_mask != 0u) {
+            snprintf(pst_x->err, pst_x->elen,
+                     "%s.channels: FREQ_* is global; channel selection not "
+                     "allowed", prefix);
+            return -1;
+        }
+        if (u8_mod_mask != 0u && pst_comp->channel_mask != 0u
+            && (u8_mod_mask & (uint8_t)~pst_comp->channel_mask) != 0u) {
+            snprintf(pst_x->err, pst_x->elen,
+                     "%s.channels: channel not enabled by component", prefix);
+            return -1;
+        }
+        st_mod.channel_mask = u8_mod_mask;
+    }
 
     pst_comp->modulators[pst_comp->modulator_count] = st_mod;
     pst_comp->modulator_count = (uint8_t)(pst_comp->modulator_count + 1u);

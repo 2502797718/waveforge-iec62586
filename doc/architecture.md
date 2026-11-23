@@ -35,7 +35,7 @@
 | [`src/wg_signal.c`](../src/wg_signal.c) | 旧 `wg_signal_t` 求值路径（program 为空时使用） |
 | [`src/wg_writer.c`](../src/wg_writer.c) | 文件头/帧头/结束记录、manifest、SHA-256 调用 |
 | [`apps/wg_main.c`](../apps/wg_main.c) | CLI 入口（仅 file 输出） |
-| [`tests/wg_selftest.c`](../tests/wg_selftest.c) | 16 项自测 |
+| [`tests/wg_selftest.c`](../tests/wg_selftest.c) | 18 项自测 |
 
 ## 3. 数据流
 
@@ -113,6 +113,8 @@ typedef struct {
 | `freq_linear` | 频率 `from → to` 线性 | `from/to/duration_s` |
 | `freq_triangle` | 频率三角，`period_s` 为完整往返；`start_s` 前保持 `from` | `from/to/period_s/start_s` |
 | `freq_step` | 频率在 `start_s` 阶跃 | `from/to/start_s` |
+
+`AMP_*` 另有可选的 `channel_mask`：`0`（默认）表示作用于所属分量的全部通道；非 `0` 时只累加掩码内通道，且必须是分量 `channel_mask` 的子集。因此同一个 fundamental 可以让电压不变、只调制电流。`FREQ_*` 是全局频率轮廓，不接受通道掩码。
 
 program 调制器的时间参数使用**全局绝对时间**（从样本 0 起算），不是段内局部时间。
 
@@ -227,7 +229,7 @@ apm900-waveform-sim-20261118/
 ├─ apps/
 │  └─ wg_main.c             CLI 入口
 ├─ tests/
-│  └─ wg_selftest.c         16 项自测
+│  └─ wg_selftest.c         18 项自测
 ├─ examples/
 │  ├─ basic.json            基础 JSON 配置
 │  ├─ harmonics.json        谐波配置

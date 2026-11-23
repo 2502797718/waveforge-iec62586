@@ -1815,6 +1815,223 @@ static void test_mod_start_hold(void)
     report(s32_ok, "mod-start-hold", a_detail);
 }
 
+/*
+ * CR-003：modulator 级通道掩码。
+ * 同一个 fundamental 覆盖 U+I；amp_const 50% 只落在掩码内的通道上。
+ */
+static void test_mod_channel_mask(void)
+{
+    const uint32_t u32_fs = 51200u;
+    const size_t z_n = 51200u;
+    const uint8_t au8_ch[6] = { (uint8_t)WG_CH_UA, (uint8_t)WG_CH_UB,
+                                (uint8_t)WG_CH_UC, (uint8_t)WG_CH_IA,
+                                (uint8_t)WG_CH_IB, (uint8_t)WG_CH_IC };
+    const double af64_nom[6] = { 220.0, 220.0, 220.0, 5.0, 5.0, 5.0 };
+    const uint8_t au8_mask[2] = { 0x38u, 0x08u };
+    double af64_rms[2][6] = {
+        { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 },
+        { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 }
+    };
+    char a_err[256];
+    char a_detail[512];
+    uint32_t c;
+    int s;
+    int s32_ok = 1;
+
+    for (s = 0; s < 2; s++) {
+        wg_builder_t *pst_b;
+        wg_handle_t *pst_wg;
+        wg_component_t st_c;
+        wg_modulator_t st_mod;
+        cap_ctx_t st_ctx;
+
+        pst_b = wg_builder_create(u32_fs, 0u);
+        if (pst_b == NULL
+            || wg_builder_set_channels(pst_b, au8_ch, 6u, af64_nom) != 0
+            || wg_builder_set_duration(pst_b, 1.0) != 0
+            || wg_builder_set_output(pst_b, (uint8_t)WG_FMT_F64, 256u) != 0) {
+            wg_builder_destroy(pst_b);
+            report(0, "mod-channel-mask", "builder setup failed");
+            return;
+        }
+        comp_init(&st_c, (uint8_t)WG_COMP_FUNDAMENTAL, 1.0, 50.0, 100.0,
+                  0.0, 0u);
+        st_c.channel_mask = 0x3Fu;
+        if (wg_builder_add_component(pst_b, &st_c) != 0) {
+            wg_builder_destroy(pst_b);
+            report(0, "mod-channel-mask", "add fundamental failed");
+            return;
+        }
+        (void)memset(&st_mod, 0, sizeof(st_mod));
+        st_mod.kind = (uint8_t)WG_MOD2_AMP_CONST;
+        st_mod.from = 50.0;
+        st_mod.channel_mask = au8_mask[s];
+        if (wg_builder_add_modulator(pst_b, 0u, &st_mod) != 0) {
+            wg_builder_destroy(pst_b);
+            report(0, "mod-channel-mask", "add modulator failed");
+            return;
+        }
+
+        pst_wg = wg_create_from_builder(pst_b, a_err, sizeof(a_err));
+        wg_builder_destroy(pst_b);
+        if (pst_wg == NULL) {
+            (void)snprintf(a_detail, sizeof(a_detail), "create failed: %s",
+                           a_err);
+            report(0, "mod-channel-mask", a_detail);
+            return;
+        }
+        if (cap_init(&st_ctx, 6u, z_n) != 0
+            || cap_run(pst_wg, &st_ctx) != 0) {
+            wg_destroy(pst_wg);
+            cap_free(&st_ctx);
+            report(0, "mod-channel-mask", "capture failed");
+            return;
+        }
+        wg_destroy(pst_wg);
+
+        for (c = 0u; c < 6u; c++) {
+            double f64_ph = 0.0;
+
+            if (dft_window(st_ctx.p_plane[c], z_n, (double)u32_fs, 0.1, 0.9,
+                           50.0, &af64_rms[s][c], &f64_ph) != 0) {
+                s32_ok = 0;
+            }
+        }
+        cap_free(&st_ctx);
+    }
+
+    for (c = 0u; c < 3u; c++) {
+        if (fabs(af64_rms[0][c] - 220.0) > 0.2
+            || fabs(af64_rms[1][c] - 220.0) > 0.2) {
+            s32_ok = 0;
+        }
+    }
+    for (c = 3u; c < 6u; c++) {
+        if (fabs(af64_rms[0][c] - 2.5) > 0.02) {
+            s32_ok = 0;
+        }
+    }
+    if (fabs(af64_rms[1][3] - 2.5) > 0.02
+        || fabs(af64_rms[1][4] - 5.0) > 0.02
+        || fabs(af64_rms[1][5] - 5.0) > 0.02) {
+        s32_ok = 0;
+    }
+
+    (void)snprintf(a_detail, sizeof(a_detail),
+                   "U=%.1f/%.1f/%.1f I=%.2f/%.2f/%.2f | Ia-only=%.2f/%.2f/%.2f",
+                   af64_rms[0][0], af64_rms[0][1], af64_rms[0][2],
+                   af64_rms[0][3], af64_rms[0][4], af64_rms[0][5],
+                   af64_rms[1][3], af64_rms[1][4], af64_rms[1][5]);
+    report(s32_ok, "mod-channel-mask", a_detail);
+}
+
+/* CR-003 校验路径：越界掩码与非法 JSON 必须明确报错。 */
+static void test_mod_mask_invalid(void)
+{
+    const uint8_t au8_ch[3] = { (uint8_t)WG_CH_UA, (uint8_t)WG_CH_UB,
+                                (uint8_t)WG_CH_UC };
+    const double af64_nom[3] = { 220.0, 220.0, 220.0 };
+    static const char *const apc_json[3] = {
+        "{\"time\":{\"duration_s\":1},\"channels\":[\"Ua\",\"Ub\",\"Uc\"],"
+        "\"program\":{\"components\":[{\"kind\":\"fundamental\","
+        "\"channels\":[\"Ua\",\"Ub\",\"Uc\"],\"modulators\":[{"
+        "\"kind\":\"amp_const\",\"from\":50,\"channels\":[\"Ua\"]}]}]}}",
+        "{\"time\":{\"duration_s\":1},\"channels\":[\"Ua\",\"Ub\",\"Uc\"],"
+        "\"program\":{\"components\":[{\"kind\":\"fundamental\","
+        "\"channels\":[\"Ua\",\"Ub\",\"Uc\"],\"modulators\":[{"
+        "\"kind\":\"amp_const\",\"from\":50,\"channels\":[\"Ia\"]}]}]}}",
+        "{\"time\":{\"duration_s\":1},\"channels\":[\"Ua\",\"Ub\",\"Uc\"],"
+        "\"program\":{\"components\":[{\"kind\":\"fundamental\","
+        "\"channels\":[\"Ua\",\"Ub\",\"Uc\"],\"modulators\":[{"
+        "\"kind\":\"freq_triangle\",\"from\":40,\"to\":60,\"period_s\":10,"
+        "\"channels\":[\"Ua\"]}]}]}}"
+    };
+    wg_builder_t *pst_b;
+    wg_config_t st_cfg;
+    wg_component_t st_c;
+    wg_modulator_t st_mod;
+    char a_err[256];
+    char a_detail[512];
+    char a_path[64];
+    FILE *p_file;
+    uint8_t u8_loaded_mask = 0u;
+    int s32_builder_reject = 0;
+    int s32_json_ok = 0;
+    int s32_json_subset_reject = 0;
+    int s32_json_freq_reject = 0;
+    int i;
+    int s32_ok = 1;
+
+    /* builder：modulator 掩码包含分量未启用的通道。 */
+    pst_b = wg_builder_create(51200u, 0u);
+    if (pst_b == NULL
+        || wg_builder_set_channels(pst_b, au8_ch, 3u, af64_nom) != 0) {
+        wg_builder_destroy(pst_b);
+        report(0, "mod-mask-invalid", "builder setup failed");
+        return;
+    }
+    comp_init(&st_c, (uint8_t)WG_COMP_FUNDAMENTAL, 1.0, 50.0, 100.0, 0.0, 0u);
+    st_c.channel_mask = 0x07u;
+    s32_builder_reject = (wg_builder_add_component(pst_b, &st_c) == 0) ? 0 : 1;
+    (void)memset(&st_mod, 0, sizeof(st_mod));
+    st_mod.kind = (uint8_t)WG_MOD2_AMP_CONST;
+    st_mod.from = 50.0;
+    st_mod.channel_mask = 0x08u;
+    if (s32_builder_reject == 0) {
+        s32_builder_reject =
+            (wg_builder_add_modulator(pst_b, 0u, &st_mod) != 0) ? 1 : 0;
+    }
+    wg_builder_destroy(pst_b);
+    if (s32_builder_reject == 0) {
+        s32_ok = 0;
+    }
+
+    /* JSON：Ua 掩码合法，Ia 掩码越界，FREQ_* 不允许掩码。 */
+    (void)snprintf(a_path, sizeof(a_path), "/tmp/wf-modmask-%ld.json",
+                   (long)getpid());
+    for (i = 0; i < 3; i++) {
+        p_file = fopen(a_path, "wb");
+        if (p_file == NULL) {
+            report(0, "mod-mask-invalid", "cannot create temporary config");
+            return;
+        }
+        (void)fputs(apc_json[i], p_file);
+        (void)fclose(p_file);
+
+        wg_config_default(&st_cfg);
+        s32_json_ok =
+            (wg_config_load_json(a_path, &st_cfg, a_err, sizeof(a_err)) == 0);
+        u8_loaded_mask =
+            st_cfg.program.components[0].modulators[0].channel_mask;
+        (void)remove(a_path);
+
+        if (i == 0) {
+            if (s32_json_ok == 0 || u8_loaded_mask != 0x01u) {
+                s32_ok = 0;
+            }
+        } else if (i == 1) {
+            s32_json_subset_reject = (s32_json_ok == 0
+                && strstr(a_err, "channel not enabled by component") != NULL)
+                ? 1 : 0;
+            if (s32_json_subset_reject == 0) {
+                s32_ok = 0;
+            }
+        } else {
+            s32_json_freq_reject = (s32_json_ok == 0
+                && strstr(a_err, "FREQ_* is global") != NULL) ? 1 : 0;
+            if (s32_json_freq_reject == 0) {
+                s32_ok = 0;
+            }
+        }
+    }
+
+    (void)snprintf(a_detail, sizeof(a_detail),
+                   "builder-reject=%d subset-reject=%d freq-reject=%d",
+                   s32_builder_reject, s32_json_subset_reject,
+                   s32_json_freq_reject);
+    report(s32_ok, "mod-mask-invalid", a_detail);
+}
+
 static void test_no_default(void)
 {
     wg_config_t st_cfg;
@@ -1966,6 +2183,8 @@ int main(void)
     test_stacked_modulation();
     test_phase_mask();
     test_mod_start_hold();
+    test_mod_channel_mask();
+    test_mod_mask_invalid();
     test_custom_triangle();
     test_no_default();
     test_old_compat();

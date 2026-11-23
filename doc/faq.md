@@ -104,6 +104,21 @@ CLI 只提供正弦/矩形调幅。复杂调制用 JSON `program`：
 
 `phase_step` 的 `channel_mask` 只影响被选中的通道；各通道的相位偏移彼此独立。
 
+如果只想调制电流、保持电压不变，给调制器加 `channels`（必须是所属分量通道的子集）：
+
+```json
+"components": [{
+  "kind": "fundamental",
+  "channels": ["Ua","Ub","Uc","Ia","Ib","Ic"],
+  "modulators": [
+    { "kind": "amp_sine", "frequency_hz": 2.3, "depth_pct": 10,
+      "start_s": 10, "channels": ["Ia","Ib","Ic"] }
+  ]
+}]
+```
+
+省略 `channels` 或掩码为 0 时作用于本分量全部通道，与旧行为一致。CLI 对应写法：`--mod sine:2.3:10:0:channels=Ia,Ib,Ic`。
+
 ## 8. 为什么没有硬件结论？
 
 发生器只输出数字样本。以下因素不在软件可控范围：

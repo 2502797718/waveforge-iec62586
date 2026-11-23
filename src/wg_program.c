@@ -140,6 +140,7 @@ int32_t prv_component_validate(const wg_component_t *pst_comp, uint32_t u32_idx,
     }
     for (i = 0u; i < (uint32_t)pst_comp->modulator_count; i++) {
         if (prv_modulator_validate(&pst_comp->modulators[i], pst_comp->kind,
+                                   pst_comp->channel_mask,
                                    u32_idx, i, pc_err, z_err_len) != PRV_OK) {
             return PRV_ERR_CONFIG;
         }
@@ -147,7 +148,8 @@ int32_t prv_component_validate(const wg_component_t *pst_comp, uint32_t u32_idx,
     return PRV_OK;
 }
 
-int32_t prv_modulator_validate(const wg_modulator_t *pst_mod, uint8_t u8_comp_kind,
+int32_t prv_modulator_validate(const wg_modulator_t *pst_mod,
+                               uint8_t u8_comp_kind, uint8_t u8_comp_mask,
                                uint32_t u32_comp_idx, uint32_t u32_mod_idx,
                                char *pc_err, size_t z_err_len)
 {
@@ -171,6 +173,31 @@ int32_t prv_modulator_validate(const wg_modulator_t *pst_mod, uint8_t u8_comp_ki
                        (unsigned)u32_comp_idx, (unsigned)u32_mod_idx);
         return prv2_fail(pc_err, z_err_len, a_path,
                          "FREQ_* only allowed on the fundamental component");
+    }
+    if ((pst_mod->channel_mask & 0x80u) != 0u) {
+        (void)snprintf(a_path, sizeof(a_path),
+                       "components[%u].modulators[%u].channels",
+                       (unsigned)u32_comp_idx, (unsigned)u32_mod_idx);
+        return prv2_fail(pc_err, z_err_len, a_path, "expected bits 0..6");
+    }
+    if (s32_freq_kind != 0 && pst_mod->channel_mask != 0u) {
+        (void)snprintf(a_path, sizeof(a_path),
+                       "components[%u].modulators[%u].channels",
+                       (unsigned)u32_comp_idx, (unsigned)u32_mod_idx);
+        return prv2_fail(pc_err, z_err_len, a_path,
+                         "FREQ_* is global; channel selection not allowed");
+    }
+    /*
+     * 分量掩码为 0 表示“本分量全部通道”，此时任何 modulator 掩码都在范围内；
+     * 非 0 时才要求 modulator 掩码是其子集。
+     */
+    if (pst_mod->channel_mask != 0u && u8_comp_mask != 0u
+        && (pst_mod->channel_mask & (uint8_t)~u8_comp_mask) != 0u) {
+        (void)snprintf(a_path, sizeof(a_path),
+                       "components[%u].modulators[%u].channels",
+                       (unsigned)u32_comp_idx, (unsigned)u32_mod_idx);
+        return prv2_fail(pc_err, z_err_len, a_path,
+                         "channel not enabled by component");
     }
 
 #define PRV2_CHECK_NUM(field, cond, expect)                                  \
@@ -407,7 +434,8 @@ int32_t wg_program_add_modulator(wg_program_t *pst_prog, uint32_t u32_index,
     if (pst_comp->modulator_count >= (uint8_t)WG_MAX_MODULATORS) {
         return PRV_ERR_CONFIG;
     }
-    if (prv_modulator_validate(pst_mod, pst_comp->kind, u32_index,
+    if (prv_modulator_validate(pst_mod, pst_comp->kind,
+                               pst_comp->channel_mask, u32_index,
                                (uint32_t)pst_comp->modulator_count,
                                NULL, 0u) != PRV_OK) {
         return PRV_ERR_CONFIG;
@@ -696,13 +724,20 @@ static double prv2_amp_mod_factor(const wg_modulator_t *pst_mod, double f64_t)
     }
 }
 
-static double prv2_amp_chain(const wg_component_t *pst_comp, double f64_t)
+static double prv2_amp_chain(const wg_component_t *pst_comp, double f64_t,
+                             uint8_t u8_ch)
 {
     double f64_factor = 1.0;
     uint32_t i;
 
     for (i = 0u; i < (uint32_t)pst_comp->modulator_count; i++) {
-        f64_factor *= prv2_amp_mod_factor(&pst_comp->modulators[i], f64_t);
+        const wg_modulator_t *pst_mod = &pst_comp->modulators[i];
+
+        if (pst_mod->channel_mask != 0u
+            && (pst_mod->channel_mask & (uint8_t)(1u << u8_ch)) == 0u) {
+            continue;
+        }
+        f64_factor *= prv2_amp_mod_factor(pst_mod, f64_t);
     }
     return f64_factor;
 }
@@ -811,7 +846,7 @@ static double prv2_fund_rms(const wg_handle_t *pst_wg, uint8_t u8_ch,
         f64_pct = pst_wg->af64_prog_amp_pct[u8_ch];
     }
     return pst_wg->cfg.nominal[u8_ch] * f64_pct / 100.0
-         * prv2_amp_chain(pst_fund, f64_t_abs);
+         * prv2_amp_chain(pst_fund, f64_t_abs, u8_ch);
 }
 
 static int prv2_channel_in_mask(uint8_t u8_mask, uint8_t u8_ch)
@@ -857,19 +892,19 @@ double prv_program_channel_value(const wg_handle_t *pst_wg, uint8_t u8_ch,
                 f64_rms = pst_wg->cfg.nominal[u8_ch]
                         * pst_comp->amp_pct[u8_ch] / 100.0;
             }
-            f64_rms *= prv2_amp_chain(pst_comp, f64_t_abs);
+            f64_rms *= prv2_amp_chain(pst_comp, f64_t_abs, u8_ch);
             f64_arg = pst_comp->order * f64_phase_eff
                     + pst_comp->phase_deg[u8_ch] * PRV_DEG2RAD;
         } else if (pst_comp->kind == (uint8_t)WG_COMP_INTERHARMONIC) {
             f64_rms = pst_wg->cfg.nominal[u8_ch]
                     * pst_comp->amp_pct[u8_ch] / 100.0
-                    * prv2_amp_chain(pst_comp, f64_t_abs);
+                    * prv2_amp_chain(pst_comp, f64_t_abs, u8_ch);
             f64_arg = pst_comp->order * f64_phase_eff
                     + pst_comp->phase_deg[u8_ch] * PRV_DEG2RAD;
         } else { /* WG_COMP_TONE */
             f64_rms = pst_wg->cfg.nominal[u8_ch]
                     * pst_comp->amp_pct[u8_ch] / 100.0
-                    * prv2_amp_chain(pst_comp, f64_t_abs);
+                    * prv2_amp_chain(pst_comp, f64_t_abs, u8_ch);
             f64_arg = PRV_TWO_PI * pst_comp->frequency_hz * f64_t_abs
                     + pst_comp->phase_deg[u8_ch] * PRV_DEG2RAD;
         }

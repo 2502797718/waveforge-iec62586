@@ -1,6 +1,6 @@
 # WaveForge User Manual
 
-> Version 1.2.0 (`WaveForge 1.2.0`)
+> Version 1.3.0 (`WaveForge 1.3.0`)
 > Platforms: Linux, WSL and macOS are the primary targets. Native Windows builds work for the CLI; the self-test assumes POSIX facilities.
 > This manual explains usage. For contracts and internals see [Architecture](architecture.md), [Input format](input-format.md) and [Output format](output-format.md).
 
@@ -38,7 +38,7 @@ make test
 |---|---|
 | `build/libwaveforge.a` | static library (Signal Core + Preset Layer) |
 | `build/wg` | command-line generator |
-| `build/selftest` | 16 self-tests |
+| `build/selftest` | 18 self-tests |
 
 `sh tools/build.sh` cleans, rebuilds and runs the self-test.
 
@@ -145,7 +145,7 @@ require a finite positive number. `wg_run_stream()` does not write to disk and u
 
 Amplitude values may carry `%` (relative to the channel nominal) or `V`/`A` (absolute RMS). Without a unit, the channel's physical unit is assumed.
 
-`--mod` accepts `sine:FM:DEPTH[:PHASE]` and `rect:FM:DEPTH:DUTY[:PHASE]`. For linear/triangle modulation, frequency ramps and events, use JSON.
+`--mod` accepts `sine:FM:DEPTH[:PHASE][:channels=...]` and `rect:FM:DEPTH:DUTY[:PHASE][:channels=...]`. The optional `channels=` list restricts that modulator to the named enabled channels (for example `sine:2.3:10:0:channels=Ia,Ib,Ic` leaves the voltages unmodulated). For linear/triangle modulation, frequency ramps and events, use JSON.
 
 ## 6. JSON programs
 

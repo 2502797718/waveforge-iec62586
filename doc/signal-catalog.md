@@ -39,7 +39,7 @@
 | `--amp` | 覆盖逐通道幅值 |
 | `--phase` | 覆盖逐通道相位 |
 | `--harmonics` / `--interharmonics` / `--tone` | 覆盖/追加分量 |
-| `--mod` | 给基波追加正弦/矩形调幅 |
+| `--mod` | 给基波追加正弦/矩形调幅，可用 `channels=` 限定通道 |
 | `--rate` / `--frame` / `--format` / `--start` | 采样与输出参数 |
 | `--out` | 输出文件 |
 

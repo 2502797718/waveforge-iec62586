@@ -171,7 +171,7 @@ typedef struct {
 
 | 字段 | 类型 | 含义 |
 |---|---|---|
-| `generator_version` | string | 如 `WaveForge 1.2.0` |
+| `generator_version` | string | 如 `WaveForge 1.3.0` |
 | `config` | object | 生效配置摘要：`duration_s`、`sample_rate_hz`、`start_utc_ns`、`segment_count`、`format`、`frame_samples`、`channel_count`、`channels`、`nominal` |
 | `final_params` | object | 最终参数：`sample_rate_hz`、`start_utc_ns`、`format`、`frame_samples`、`channel_count` |
 | `signal` | object | 旧模型有效值：频率轮廓、逐通道幅值/相位、谐波/间谐波/载波、调制 |
@@ -188,7 +188,7 @@ typedef struct {
 说明：
 
 - manifest 中没有 `test`、`system_hz`、`seed` 字段；场景名只存在于 CLI 输入，不写入 manifest。
-- `program.components[].modulators[]` 记录该 kind 实际生效的参数，包括 `start_s`、`hold`；`events[]` 记录 `channel_mask`，用于复现逐通道相位偏移。
+- `program.components[].modulators[]` 记录该 kind 实际生效的参数，包括 `start_s`、`hold`；当调制器限定通道时额外记录数值 `channel_mask`（掩码为 0 时不输出，保持旧配置的 manifest 逐字节不变）。`events[]` 记录 `channel_mask`，用于复现逐通道相位偏移。
 - `config` 与 `final_params` 都记录最终生效值，不是默认值来源。
 - 相同输入两次运行，`output_sha256` 必须相同；manifest 本身不参与哈希。
 
@@ -196,7 +196,7 @@ typedef struct {
 
 ```json
 {
-  "generator_version": "WaveForge 1.2.0",
+  "generator_version": "WaveForge 1.3.0",
   "config": {
     "duration_s": 2,
     "sample_rate_hz": 51200,

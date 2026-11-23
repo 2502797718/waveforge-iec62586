@@ -36,7 +36,8 @@ hardware, or reproduce standard text.
 
 - **Arbitrary signal construction.** Up to 96 components — fundamental, harmonics 2–64,
   fractional interharmonics (1.5, 7.5, 49.5), absolute carrier tones — each with its own chain of
-  up to 8 amplitude or frequency modulators. Add absolute-time events and one-level segments on top.
+  up to 8 amplitude or frequency modulators, and each modulator can be limited to a subset of
+  channels. Add absolute-time events and one-level segments on top.
 - **Presets are defaults, not locks.** A scenario fills a starting configuration; `--freq`,
   `--amp`, `--harmonics`, a JSON `program`, or the C API can replace any field. When a standard
   value is missing, the preset returns `CUSTOM` / `NO_DEFAULT` with the exact field path instead of
@@ -56,7 +57,7 @@ hardware, or reproduce standard text.
 | **Preset layer** | IEC 62586-2 scenario names for clauses 6.1–6.13 plus 3 frequency aliases; clauses 6.14–6.17 are recipe-level mappings over explicit current channels. Each preset only supplies defaults. |
 | **Output** | `WGIEC625` file (64 B header, 56 B frame headers, 32 B trailer), f64 / f32 / i24 samples, planar channel layout, `<file>.manifest.json` with SHA-256. |
 | **Streaming** | `wg_run_stream()` frame callback with constant memory, suitable for multi-hour runs; `samples` is valid only inside the callback. |
-| **Verification** | 16 self-tests, 6 regression scenarios, independent `verify.py` / `check_acceptance.py` that rebuild the expected signal from the published format and manifest. |
+| **Verification** | 18 self-tests, 6 regression scenarios, independent `verify.py` / `check_acceptance.py` that rebuild the expected signal from the published format and manifest. |
 | **Dependencies** | C99 standard library and `libm` only. Python 3.8+ is needed only for the independent verifier and uses the standard library alone. |
 
 ## How it compares

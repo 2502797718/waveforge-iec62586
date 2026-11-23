@@ -39,7 +39,7 @@
 
 f32/i24 的量化误差按格式单独考虑；i24 用文件头 `u_scale`/`i_scale` 还原。
 
-## 3. selftest 16 项
+## 3. selftest 18 项
 
 运行：
 
@@ -65,6 +65,8 @@ make test
 | 14 | `duration-limit` | `86400 s` 被接受（库/JSON 无上限），`0 s` 被拒绝 | 仅要求有限正数 |
 | 15 | `phase-mask` | 3 通道，`phase_step` 只作用于 Ua | Ua +30°，Ub/Uc 0° |
 | 16 | `mod-start-hold` | `amp_triangle` 的 `start_s`/`hold` | 起始前 110.0 V，起始后 22.1 V |
+| 17 | `mod-channel-mask` | 6 通道单一 fundamental，`amp_const 50%` 只作用于掩码内通道 | U 保持 220 V；I 掩码 0x38 时 2.5 A；仅 Ia 时 Ia 2.5 A、Ib/Ic 5.0 A |
+| 18 | `mod-mask-invalid` | 越界掩码与非法 JSON 必须报错 | builder 拒绝、`channel not enabled by component`、`FREQ_* is global` |
 
 期望输出：
 
@@ -183,7 +185,7 @@ python3 tools/check_acceptance.py a8-1-3 a813.bin
 runs/<run-id>/
 ├─ command.txt              实际命令与环境
 ├─ build.log / clean.log    构建输出（0 warning）
-├─ selftest.log             16 项自测输出
+├─ selftest.log             18 项自测输出
 ├─ *.bin                    波形文件
 ├─ *.bin.manifest.json      对应的 manifest
 ├─ check/                   场景化验收 JSON

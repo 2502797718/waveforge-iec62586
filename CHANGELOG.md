@@ -14,6 +14,25 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Golden-file fixtures for f32 and i24 output.
 - Python bindings over the stream API.
 
+## [1.3.0] - 2026-11-23
+
+### Added
+
+- Per-modulator channel selection: `wg_modulator_t.channel_mask` and JSON
+  `modulators[].channels`. `0` (default) keeps the old "all channels of the component"
+  behavior; a non-zero mask restricts the `AMP_*` modulator to those channels and must be a
+  subset of the component mask. This lets one fundamental component modulate only the
+  currents while the voltages stay at the test point.
+- CLI `--mod` accepts a trailing `channels=Ia,Ib,Ic` token, e.g.
+  `--mod sine:2.3:10:0:channels=Ia,Ib,Ic`.
+- Manifest records `channel_mask` for channel-scoped modulators; omitted when the mask is
+  `0`, so existing manifests are byte-identical.
+
+### Changed
+
+- `FREQ_*` modulators reject a non-zero channel mask (`FREQ_* is global; channel
+  selection not allowed`), because the frequency profile is global to the program.
+
 ## [1.2.0] - 2026-11-22
 
 ### Added

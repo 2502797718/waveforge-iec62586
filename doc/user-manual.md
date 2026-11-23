@@ -1,6 +1,6 @@
 # WaveForge 使用手册
 
-> 版本：1.2.0（`WaveForge 1.2.0`）
+> 版本：1.3.0（`WaveForge 1.3.0`）
 > 适用平台：Linux / WSL / macOS（POSIX 工具链）；Windows 原生构建可用，但自测依赖 POSIX 接口。
 > 本文只讲**怎么用**；结构与契约见 [架构](architecture.md)、[输入格式](input-format.md)、[输出格式](output-format.md)。
 
@@ -39,7 +39,7 @@ make                 # 等价于 make all
 |---|---|
 | `build/libwaveforge.a` | 静态库（Signal Core + Preset Layer） |
 | `build/wg` | 命令行工具 |
-| `build/selftest` | 16 项自测 |
+| `build/selftest` | 18 项自测 |
 
 其它目标：
 
@@ -181,6 +181,10 @@ A6.1.6        50/60  EXCLUDED: anti-alias proof belongs to analog front end
 
 # 叠加 2.3 Hz/10 % 正弦调幅
 ./build/wg gen --test A1.2.2 --duration 5 --mod sine:2.3:10:0 --out am.bin
+
+# 只调制电流通道（电压保持不变；需配置已启用 Ia/Ib/Ic）
+./build/wg gen --config cfg6ch.json --duration 5 \
+  --mod sine:2.3:10:0:channels=Ia,Ib,Ic --out am_current.bin
 
 # 在 5 s 处加 +30° 相位阶跃
 ./build/wg gen --test A1.2.2 --duration 10 --phase-step 5.0:30 --out step.bin
@@ -456,7 +460,7 @@ python3 tools/check_acceptance.py a8-1-3 a813.bin
 make test
 ```
 
-16 项覆盖：配置校验、时长上限、流计数/时间戳、file-vs-stream、确定性、相位连续、i24、660 s 长跑、builder 任意分量、逐分量包络、叠加调制、相位掩码、调制起始/保持、自定义三角、`NO_DEFAULT`、旧字段兼容。详见 [校验](verification.md)。
+18 项覆盖：配置校验、时长上限、流计数/时间戳、file-vs-stream、确定性、相位连续、i24、660 s 长跑、builder 任意分量、逐分量包络、叠加调制、相位掩码、调制起始/保持、调制器通道掩码、自定义三角、`NO_DEFAULT`、旧字段兼容。详见 [校验](verification.md)。
 
 ## 10. 常见场景做法
 

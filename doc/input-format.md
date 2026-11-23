@@ -82,7 +82,7 @@ wg list
 | `--harmonics ...` | 谐波列表 | `"3=10%,180;7=5%,0"` |
 | `--interharmonics ...` | 间谐波列表 | `"1.5=5%,0;7.5=10%,0"` |
 | `--tone ...` | 载波频点（可重复） | `1060=3%,0` |
-| `--mod ...` | 基波调制器（可重复） | `sine:2.3:10:0` / `rect:10:5:50:0` |
+| `--mod ...` | 基波调制器（可重复），可带 `channels=` | `sine:2.3:10:0` / `rect:10:5:50:0` / `sine:2.3:10:0:channels=Ia,Ib,Ic` |
 | `--phase-step ...` | 相位阶跃事件（可重复） | `5.0:30` |
 
 #### `--amp` 规则
@@ -103,13 +103,14 @@ wg list
 #### `--mod` 规则
 
 ```text
-sine:FM:DEPTH[:PHASE]        正弦调幅
-rect:FM:DEPTH:DUTY[:PHASE]   矩形调幅，DUTY 为 0–100 %
+sine:FM:DEPTH[:PHASE][:channels=Ia,Ib,Ic]        正弦调幅
+rect:FM:DEPTH:DUTY[:PHASE][:channels=Ia,Ib,Ic]   矩形调幅，DUTY 为 0–100 %
 ```
 
 - 可重复，最多 8 条，全部挂在基波上。
+- `channels=` 可省略；省略时作用于全部已启用通道，给出时只调制列表内通道，且这些通道必须已启用。
 - 使用 `--mod` 时，CLI 会把当前旧 `signal` 物化为 program；若存在 `segments`，报 `mod: not supported with segments`。
-- 复杂调制（`amp_linear`、`amp_triangle`、`freq_triangle` 等）没有对应的 CLI 选项，请使用 JSON `program`。
+- `--mod` 不支持 `start_s`/`hold`。复杂调制（`amp_linear`、`amp_triangle`、`freq_triangle` 等）请使用 JSON `program`。
 
 #### `--phase-step` 规则
 
@@ -293,17 +294,19 @@ TIME_S:ANGLE_DEG
 
 | `kind` | 必填 | 可选 |
 |---|---|---|
-| `amp_const` | `from` | — |
-| `amp_linear` | `from`、`to`、`duration_s` | — |
-| `amp_triangle` | `from`、`to`、`period_s` | `start_s`、`hold` |
-| `amp_step` | `from`、`to`、`start_s` | — |
-| `amp_sine` | `frequency_hz`、`depth_pct` | `phase_deg`、`start_s` |
-| `amp_rect` | `frequency_hz`、`depth_pct` | `duty_pct`（默认 0）、`phase_deg`、`start_s` |
+| `amp_const` | `from` | `channels` |
+| `amp_linear` | `from`、`to`、`duration_s` | `channels` |
+| `amp_triangle` | `from`、`to`、`period_s` | `start_s`、`hold`、`channels` |
+| `amp_step` | `from`、`to`、`start_s` | `channels` |
+| `amp_sine` | `frequency_hz`、`depth_pct` | `phase_deg`、`start_s`、`channels` |
+| `amp_rect` | `frequency_hz`、`depth_pct` | `duty_pct`（默认 0）、`phase_deg`、`start_s`、`channels` |
 | `freq_linear` | `from`、`to`、`duration_s` | 仅基波 |
 | `freq_triangle` | `from`、`to`、`period_s` | `start_s`；仅基波 |
 | `freq_step` | `from`、`to`、`start_s` | 仅基波 |
 
 - `amp_*` 的 `from`/`to` 单位为 %，范围 0–1000。
+- `channels`（数组或逗号字符串）限定 `amp_*` 的作用通道：省略表示本分量全部通道；给出时必须是所属分量 `channels` 的子集，否则报 `channels: channel not enabled by component`。
+- `freq_*` 是全局频率轮廓，带 `channels` 会报错 `FREQ_* is global; channel selection not allowed`。
 - `amp_triangle` 的 `start_s` 前保持 `hold`（%，默认 0），从 `start_s` 起开始三角；若 `start_s > 0` 且省略 `hold`，该分量在起始前幅值为 0。
 - `amp_sine`/`amp_rect` 在 `start_s` 前不调制；`freq_triangle` 在 `start_s` 前保持 `from`。
 - `freq_*` 的 `from`/`to` 单位为 Hz，必须 > 0；整个 program 最多一条 `FREQ_*`。

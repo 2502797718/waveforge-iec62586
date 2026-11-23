@@ -64,6 +64,10 @@ typedef enum {
  *   FREQ_*         仅允许挂在基波分量上，作为全局频率轮廓（from/to 为 Hz）；
  *                  FREQ_LINEAR 用 duration_s，FREQ_TRIANGLE 在 start_s 前保持 from，
  *                  FREQ_STEP 用 start_s。
+ *
+ * channel_mask 限定 AMP_* 的作用通道：0 表示本分量全部通道（默认，兼容旧行为），
+ * 非 0 时 bit n = 通道 n（WG_CH_UA=0 … WG_CH_IN=6），且必须是所属分量掩码的子集。
+ * FREQ_* 是全局频率轮廓，不允许设置通道掩码。
  */
 typedef struct {
     uint8_t kind;
@@ -77,6 +81,7 @@ typedef struct {
     double  start_s;
     double  duration_s;
     double  hold;
+    uint8_t channel_mask;
 } wg_modulator_t;
 
 /*

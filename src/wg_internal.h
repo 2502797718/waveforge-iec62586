@@ -84,7 +84,8 @@ double prv_channel_value(const wg_handle_t *pst_wg, uint8_t u8_ch,
 /* program 校验：字段路径写入 pc_err，非法返回 PRV_ERR_CONFIG。 */
 int32_t prv_component_validate(const wg_component_t *pst_comp, uint32_t u32_idx,
                                char *pc_err, size_t z_err_len);
-int32_t prv_modulator_validate(const wg_modulator_t *pst_mod, uint8_t u8_comp_kind,
+int32_t prv_modulator_validate(const wg_modulator_t *pst_mod,
+                               uint8_t u8_comp_kind, uint8_t u8_comp_mask,
                                uint32_t u32_comp_idx, uint32_t u32_mod_idx,
                                char *pc_err, size_t z_err_len);
 int32_t prv_event_validate(const wg_event_t *pst_event, uint32_t u32_idx,
